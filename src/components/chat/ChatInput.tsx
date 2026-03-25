@@ -1,120 +1,109 @@
 'use client'
 
-import { useRef, useCallback } from 'react'
-import type { ChatStatus } from 'ai'
+import { useCallback, useRef } from 'react'
 
 interface ChatInputProps {
-  input: string
-  setInput: (value: string) => void
-  onSubmit: (e?: React.FormEvent) => void
+  value: string
+  onChange: (value: string) => void
+  onSend: (text: string) => void
   onStop: () => void
-  status: ChatStatus
+  isDisabled: boolean
+  isStreaming: boolean
 }
 
 export function ChatInput({
-  input,
-  setInput,
-  onSubmit,
+  value,
+  onChange,
+  onSend,
   onStop,
-  status,
+  isDisabled,
+  isStreaming,
 }: ChatInputProps) {
   const textareaRef = useRef<HTMLTextAreaElement>(null)
 
-  const isActive = status === 'submitted' || status === 'streaming'
-  const canSend = input.trim().length > 0 && status === 'ready'
-
   const handleKeyDown = useCallback(
     (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
+      // Enter without Shift → send; Shift+Enter → newline
       if (e.key === 'Enter' && !e.shiftKey) {
         e.preventDefault()
-        if (canSend) {
-          onSubmit()
+        if (!isDisabled && value.trim()) {
+          onSend(value)
         }
       }
     },
-    [canSend, onSubmit],
+    [value, onSend, isDisabled],
   )
 
   const handleInput = useCallback(
     (e: React.ChangeEvent<HTMLTextAreaElement>) => {
-      setInput(e.target.value)
-      const target = e.target
-      target.style.height = 'auto'
-      target.style.height = `${Math.min(target.scrollHeight, 160)}px`
-    },
-    [setInput],
-  )
-
-  const handleFormSubmit = useCallback(
-    (e: React.FormEvent) => {
-      e.preventDefault()
-      if (canSend) {
-        onSubmit()
-        if (textareaRef.current) {
-          textareaRef.current.style.height = 'auto'
-        }
+      onChange(e.target.value)
+      // Auto-grow: reset then set to scrollHeight
+      const el = textareaRef.current
+      if (el) {
+        el.style.height = 'auto'
+        el.style.height = `${Math.min(el.scrollHeight, 160)}px`
       }
     },
-    [canSend, onSubmit],
+    [onChange],
   )
 
   return (
-    <div className="border-t border-iris-900/20 bg-surface-0/95 backdrop-blur-sm px-4 py-3">
-      {status === 'error' && (
-        <p className="text-error text-xs font-sans mb-2 px-1">
-          Something went wrong. Please try again.
-        </p>
-      )}
-
-      <form
-        onSubmit={handleFormSubmit}
-        className="flex items-end gap-3 max-w-2xl mx-auto"
-      >
+    <div className="flex-shrink-0 px-4 py-3 border-t border-iris-900/20 bg-surface-0">
+      <div className="flex items-end gap-2 max-w-2xl mx-auto">
         <textarea
           ref={textareaRef}
-          value={input}
+          value={value}
           onChange={handleInput}
           onKeyDown={handleKeyDown}
-          placeholder="Share what's on your mind..."
+          placeholder="Message IRIS…"
           rows={1}
-          disabled={isActive}
-          className="flex-1 resize-none bg-surface-2 border border-iris-900/50 rounded-xl px-4 py-3 font-sans text-sm text-text-primary placeholder:text-text-muted focus:outline-none focus:border-iris-500 transition-colors duration-200 disabled:opacity-50 max-h-40 scroll-smooth"
+          maxLength={2000}
+          disabled={isDisabled && !isStreaming}
+          className={[
+            'flex-1 resize-none bg-surface-1 border border-iris-900/50 rounded-2xl',
+            'px-4 py-3 font-sans text-sm text-text-primary placeholder:text-text-muted',
+            'focus:outline-none focus:border-iris-500 transition-colors duration-200',
+            'min-h-[46px] max-h-[160px] overflow-y-auto',
+            'disabled:opacity-50',
+          ].join(' ')}
           aria-label="Message input"
         />
 
-        {isActive ? (
+        {/* Stop button while streaming */}
+        {isStreaming ? (
           <button
             type="button"
             onClick={onStop}
-            className="flex items-center justify-center w-10 h-10 rounded-xl border border-iris-600 text-iris-400 hover:bg-iris-600/10 transition-all duration-200 flex-shrink-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-iris-500 focus-visible:ring-offset-2 focus-visible:ring-offset-surface-0"
+            className="flex-shrink-0 w-10 h-10 rounded-xl bg-surface-1 border border-iris-700/50 flex items-center justify-center text-iris-400 hover:bg-surface-2 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-iris-500 focus-visible:ring-offset-2 focus-visible:ring-offset-surface-0"
             aria-label="Stop generating"
           >
-            <svg
-              width="14"
-              height="14"
-              viewBox="0 0 14 14"
-              fill="currentColor"
-              aria-hidden="true"
-            >
-              <rect x="2" y="2" width="10" height="10" rx="1.5" />
-            </svg>
+            <span className="w-3 h-3 rounded-sm bg-iris-400" aria-hidden="true" />
           </button>
         ) : (
+          /* Send button */
           <button
-            type="submit"
-            disabled={!canSend}
-            className="flex items-center justify-center w-10 h-10 rounded-xl bg-sacred-iris text-white hover:opacity-90 active:scale-[0.96] transition-all duration-200 disabled:opacity-30 disabled:cursor-not-allowed flex-shrink-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-iris-500 focus-visible:ring-offset-2 focus-visible:ring-offset-surface-0"
+            type="button"
+            onClick={() => onSend(value)}
+            disabled={isDisabled || !value.trim()}
+            className={[
+              'flex-shrink-0 w-10 h-10 rounded-xl flex items-center justify-center',
+              'transition-all duration-200',
+              'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-iris-500 focus-visible:ring-offset-2 focus-visible:ring-offset-surface-0',
+              isDisabled || !value.trim()
+                ? 'bg-iris-900/30 text-iris-700 cursor-not-allowed'
+                : 'bg-iris-600 text-white hover:bg-iris-500 active:scale-[0.95]',
+            ].join(' ')}
             aria-label="Send message"
           >
+            {/* Arrow up icon */}
             <svg
-              width="16"
-              height="16"
+              className="w-4 h-4"
               viewBox="0 0 16 16"
               fill="none"
               aria-hidden="true"
             >
               <path
-                d="M14 2L7 9M14 2L9.5 14L7 9M14 2L2 6.5L7 9"
+                d="M8 13V3M8 3L4 7M8 3l4 4"
                 stroke="currentColor"
                 strokeWidth="1.5"
                 strokeLinecap="round"
@@ -123,7 +112,15 @@ export function ChatInput({
             </svg>
           </button>
         )}
-      </form>
+      </div>
+
+      <p className="font-sans text-[0.6rem] text-text-muted text-center mt-2 max-w-2xl mx-auto">
+        IRIS is a wellness companion, not a therapist. In crisis? Call or text{' '}
+        <a href="tel:988" className="underline underline-offset-1 text-iris-400">
+          988
+        </a>
+        .
+      </p>
     </div>
   )
 }

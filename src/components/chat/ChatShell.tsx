@@ -1,52 +1,36 @@
-'use client'
-
-import { useChatSession } from '@/hooks/useChatSession'
-import { MessageList } from '@/components/chat/MessageList'
-import { ChatInput } from '@/components/chat/ChatInput'
-import { CrisisBanner } from '@/components/chat/CrisisBanner'
-
-interface UserContext {
-  name: string
-  daysSober: number
-  tone: string
-  triggers: string[]
-}
-
 interface ChatShellProps {
-  sessionId: string
-  userContext?: UserContext | undefined
+  children: React.ReactNode
+  displayName: string | null
 }
 
-export function ChatShell({ sessionId, userContext }: ChatShellProps) {
-  const {
-    messages,
-    status,
-    input,
-    setInput,
-    handleSend,
-    stop,
-    crisisState,
-    dismissCrisis,
-  } = useChatSession(sessionId, userContext)
-
+export function ChatShell({ children, displayName }: ChatShellProps) {
   return (
-    <div className="flex flex-col h-full">
-      <MessageList messages={messages} status={status} />
+    <div className="flex flex-col h-screen bg-surface-0">
+      {/* Top nav */}
+      <nav className="flex-shrink-0 flex items-center justify-between px-5 py-3 border-b border-iris-900/20 bg-surface-0/90 backdrop-blur-sm">
+        <div className="flex items-center gap-3">
+          <a
+            href="/dashboard"
+            className="font-sans text-sm text-text-muted hover:text-text-secondary transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-iris-500 rounded"
+            aria-label="Back to dashboard"
+          >
+            ←
+          </a>
+          <span className="font-serif font-light text-lg tracking-tight text-text-primary">
+            IRIS
+          </span>
+        </div>
+        {displayName && (
+          <span className="font-sans text-xs text-text-muted">
+            {displayName}
+          </span>
+        )}
+      </nav>
 
-      {crisisState !== null && (
-        <CrisisBanner
-          tier={crisisState.tier}
-          onDismiss={dismissCrisis}
-        />
-      )}
-
-      <ChatInput
-        input={input}
-        setInput={setInput}
-        onSubmit={handleSend}
-        onStop={stop}
-        status={status}
-      />
+      {/* Chat body — fills remaining height */}
+      <div className="flex-1 flex flex-col overflow-hidden">
+        {children}
+      </div>
     </div>
   )
 }

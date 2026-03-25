@@ -1,36 +1,138 @@
 import { openai } from '@ai-sdk/openai'
 import {
   streamText,
-  type UIMessage,
   convertToModelMessages,
+  createUIMessageStream,
+  createUIMessageStreamResponse,
+  generateId,
+  type UIMessage,
 } from 'ai'
 import { createClient } from '@/lib/supabase/server'
 import { ChatRequestSchema } from '@/types'
+import { detectCrisis, CRISIS_RESPONSES } from '@/lib/crisis-detection'
 
 export const maxDuration = 60
 
 export async function POST(req: Request) {
   const supabase = await createClient()
+
   const {
     data: { user },
   } = await supabase.auth.getUser()
-  if (!user) return new Response('Unauthorized', { status: 401 })
 
-  const body: unknown = await req.json()
-  const parsed = ChatRequestSchema.safeParse(body)
-  if (!parsed.success) {
-    return new Response(JSON.stringify({ error: parsed.error.errors }), {
-      status: 400,
-      headers: { 'Content-Type': 'application/json' },
-    })
+  if (!user) {
+    return new Response('Unauthorized', { status: 401 })
   }
 
-  const { messages, id, userContext } = parsed.data
-  const systemPrompt = buildSystemPrompt(userContext)
+  let body: unknown
+  try {
+    body = await req.json()
+  } catch {
+    return new Response('Invalid JSON', { status: 400 })
+  }
+
+  const parsed = ChatRequestSchema.safeParse(body)
+  if (!parsed.success) {
+    return new Response(
+      JSON.stringify({ error: parsed.error.errors.map((e) => e.message).join('; ') }),
+      { status: 400, headers: { 'Content-Type': 'application/json' } },
+    )
+  }
+
+  const { messages, id: conversationId, userContext } = parsed.data
+
+  // Persist the incoming user message before streaming begins
+  const lastMessage = messages[messages.length - 1]
+  let textContent = ''
+  if (lastMessage && isUIMessage(lastMessage) && lastMessage.role === 'user') {
+    textContent = lastMessage.parts
+      .filter((p): p is { type: 'text'; text: string } => p.type === 'text')
+      .map((p) => p.text)
+      .join('')
+  }
+
+  const crisisTier = textContent ? detectCrisis(textContent) : null
+
+  let persistedMessageId: string | null = null
+  if (textContent) {
+    const { data: msgRow, error: msgErr } = await supabase
+      .from('messages')
+      .insert({
+        conversation_id: conversationId,
+        role: 'user',
+        content: textContent,
+        user_id: user.id,
+        flagged_crisis: crisisTier !== null,
+        crisis_tier: crisisTier,
+      })
+      .select('id')
+      .single()
+    if (msgErr) {
+      console.error('[chat] failed to persist user message:', msgErr)
+    } else {
+      persistedMessageId = msgRow.id
+    }
+  }
+
+  // --- Server-side crisis gate ---
+  // Tier 1 / 2: never route to GPT-4o; return a scripted response and log an audit record.
+  if (crisisTier === 1 || crisisTier === 2) {
+    const scriptedResponse = CRISIS_RESPONSES[crisisTier]
+
+    const { error: crisisErr } = await supabase.from('crisis_events').insert({
+      user_id: user.id,
+      message_id: persistedMessageId,
+      crisis_tier: crisisTier,
+      message_text: textContent,
+      resolved: false,
+    })
+    if (crisisErr) {
+      console.error('[chat] failed to persist crisis_event:', crisisErr)
+    }
+
+    // Persist the scripted assistant reply for the conversation history
+    const { error: replyErr } = await supabase.from('messages').insert({
+      conversation_id: conversationId,
+      role: 'assistant',
+      content: scriptedResponse,
+      user_id: user.id,
+      flagged_crisis: false,
+      crisis_tier: null,
+    })
+    if (replyErr) {
+      console.error('[chat] failed to persist scripted assistant reply:', replyErr)
+    }
+
+    const textId = generateId()
+    const stream = createUIMessageStream({
+      execute: ({ writer }) => {
+        writer.write({ type: 'start' })
+        writer.write({ type: 'text-start', id: textId })
+        writer.write({ type: 'text-delta', id: textId, delta: scriptedResponse })
+        writer.write({ type: 'text-end', id: textId })
+        writer.write({ type: 'finish', finishReason: 'stop' })
+      },
+    })
+    return createUIMessageStreamResponse({ stream })
+  }
+
+  // Tier 3: log audit record but continue to GPT-4o
+  if (crisisTier === 3) {
+    const { error: crisisErr } = await supabase.from('crisis_events').insert({
+      user_id: user.id,
+      message_id: persistedMessageId,
+      crisis_tier: crisisTier,
+      message_text: textContent,
+      resolved: false,
+    })
+    if (crisisErr) {
+      console.error('[chat] failed to persist tier-3 crisis_event:', crisisErr)
+    }
+  }
 
   const result = streamText({
     model: openai('gpt-4o'),
-    system: systemPrompt,
+    system: buildSystemPrompt(userContext),
     messages: await convertToModelMessages(messages as UIMessage[]),
     temperature: 0.7,
     maxOutputTokens: 2048,
@@ -38,23 +140,34 @@ export async function POST(req: Request) {
   })
 
   return result.toUIMessageStreamResponse({
-    originalMessages: messages as UIMessage[],
     onFinish: async ({ responseMessage }) => {
       const textContent = responseMessage.parts
-        .filter(
-          (p): p is { type: 'text'; text: string } => p.type === 'text',
-        )
+        .filter((p): p is { type: 'text'; text: string } => p.type === 'text')
         .map((p) => p.text)
         .join('')
 
-      await supabase.from('messages').insert({
-        conversation_id: id,
-        role: 'assistant',
-        content: textContent,
-        user_id: user.id,
-      })
+      if (textContent) {
+        await supabase.from('messages').insert({
+          conversation_id: conversationId,
+          role: 'assistant',
+          content: textContent,
+          user_id: user.id,
+          flagged_crisis: false,
+          crisis_tier: null,
+        })
+      }
     },
   })
+}
+
+function isUIMessage(value: unknown): value is UIMessage {
+  return (
+    typeof value === 'object' &&
+    value !== null &&
+    'role' in value &&
+    'parts' in value &&
+    Array.isArray((value as Record<string, unknown>).parts)
+  )
 }
 
 function buildSystemPrompt(
@@ -65,22 +178,30 @@ function buildSystemPrompt(
     triggers: string[]
   },
 ): string {
-  return `You are IRIS, a compassionate AI sobriety companion — not a therapist.
-${
-  userContext
-    ? `The user's name is ${userContext.name}. They are ${userContext.daysSober} days sober.
+  const contextSection = userContext
+    ? `
+The user's name is ${userContext.name}. They have been sober for ${userContext.daysSober} day${userContext.daysSober === 1 ? '' : 's'}.
 Preferred tone: ${userContext.tone}.
-Known triggers: ${userContext.triggers.join(', ')}.`
+Known triggers: ${userContext.triggers.length > 0 ? userContext.triggers.join(', ') : 'none specified'}.`
     : ''
-}
 
-Guidelines:
-- Never shame relapse. Normalize it as part of recovery.
-- If the user expresses suicidal ideation or self-harm, STOP and provide scripted crisis resources.
-- You are NOT a therapist. Never diagnose, prescribe, or use clinical language.
-- Be warm, specific, and grounded in evidence-based recovery principles (CBT, MI, SMART Recovery).
-- Never use the words "therapy", "treatment", or "diagnosis".
-- Keep responses concise and conversational. Avoid walls of text.
-- Ask thoughtful follow-up questions to show genuine engagement.
-- Celebrate small wins and progress, no matter how small.`
+  return `You are IRIS, a compassionate AI sobriety companion — not a therapist, not a medical professional.${contextSection}
+
+## Core guidelines
+- Be warm, specific, and grounded in evidence-based recovery principles (CBT, Motivational Interviewing, SMART Recovery).
+- Never shame or judge relapse. Normalise it as part of recovery and redirect to the next moment.
+- Never use the words "therapy", "treatment", "diagnosis", or "prescription".
+- You are NOT a therapist. If the user needs clinical help, encourage them to seek a professional.
+- Keep responses concise — two to four paragraphs at most unless the user asks for more.
+- Ask one follow-up question per response to keep the conversation engaged.
+
+## Crisis protocol
+- If the user expresses suicidal ideation or intent to self-harm (e.g. "I want to kill myself", "I want to hurt myself"), IMMEDIATELY stop your normal response and provide ONLY the scripted crisis resources. Do not generate therapeutic content.
+- Scripted crisis message: "I hear you, and I'm glad you're here. Please reach out right now: 988 Suicide & Crisis Lifeline (call or text 988), Crisis Text Line (text HOME to 741741), or emergency services (911)."
+- For expressions of hopelessness or passive ideation, gently acknowledge the feeling and encourage them to contact 988.
+
+## Sobriety framing
+- Reference the user's sobriety milestone when relevant and encouraging.
+- When discussing cravings or urges, use the HALT check (Hungry, Angry, Lonely, Tired) as a grounding tool.
+- Celebrate small wins specifically — not generically.`
 }
