@@ -1,7 +1,15 @@
 import { openai } from '@ai-sdk/openai'
-import { streamText, convertToModelMessages, type UIMessage } from 'ai'
+import {
+  streamText,
+  convertToModelMessages,
+  createUIMessageStream,
+  createUIMessageStreamResponse,
+  generateId,
+  type UIMessage,
+} from 'ai'
 import { createClient } from '@/lib/supabase/server'
 import { ChatRequestSchema } from '@/types'
+import { detectCrisis, CRISIS_RESPONSES } from '@/lib/crisis-detection'
 
 export const maxDuration = 60
 
@@ -35,20 +43,91 @@ export async function POST(req: Request) {
 
   // Persist the incoming user message before streaming begins
   const lastMessage = messages[messages.length - 1]
+  let textContent = ''
   if (lastMessage && isUIMessage(lastMessage) && lastMessage.role === 'user') {
-    const textContent = lastMessage.parts
+    textContent = lastMessage.parts
       .filter((p): p is { type: 'text'; text: string } => p.type === 'text')
       .map((p) => p.text)
       .join('')
+  }
 
-    await supabase.from('messages').insert({
+  const crisisTier = textContent ? detectCrisis(textContent) : null
+
+  let persistedMessageId: string | null = null
+  if (textContent) {
+    const { data: msgRow, error: msgErr } = await supabase
+      .from('messages')
+      .insert({
+        conversation_id: conversationId,
+        role: 'user',
+        content: textContent,
+        user_id: user.id,
+        flagged_crisis: crisisTier !== null,
+        crisis_tier: crisisTier,
+      })
+      .select('id')
+      .single()
+    if (msgErr) {
+      console.error('[chat] failed to persist user message:', msgErr)
+    } else {
+      persistedMessageId = msgRow.id
+    }
+  }
+
+  // --- Server-side crisis gate ---
+  // Tier 1 / 2: never route to GPT-4o; return a scripted response and log an audit record.
+  if (crisisTier === 1 || crisisTier === 2) {
+    const scriptedResponse = CRISIS_RESPONSES[crisisTier]
+
+    const { error: crisisErr } = await supabase.from('crisis_events').insert({
+      user_id: user.id,
+      message_id: persistedMessageId,
+      crisis_tier: crisisTier,
+      message_text: textContent,
+      resolved: false,
+    })
+    if (crisisErr) {
+      console.error('[chat] failed to persist crisis_event:', crisisErr)
+    }
+
+    // Persist the scripted assistant reply for the conversation history
+    const { error: replyErr } = await supabase.from('messages').insert({
       conversation_id: conversationId,
-      role: 'user',
-      content: textContent,
+      role: 'assistant',
+      content: scriptedResponse,
       user_id: user.id,
       flagged_crisis: false,
       crisis_tier: null,
     })
+    if (replyErr) {
+      console.error('[chat] failed to persist scripted assistant reply:', replyErr)
+    }
+
+    const textId = generateId()
+    const stream = createUIMessageStream({
+      execute: ({ writer }) => {
+        writer.write({ type: 'start' })
+        writer.write({ type: 'text-start', id: textId })
+        writer.write({ type: 'text-delta', id: textId, delta: scriptedResponse })
+        writer.write({ type: 'text-end', id: textId })
+        writer.write({ type: 'finish', finishReason: 'stop' })
+      },
+    })
+    return createUIMessageStreamResponse({ stream })
+  }
+
+  // Tier 3: log audit record but continue to GPT-4o
+  if (crisisTier === 3) {
+    const { error: crisisErr } = await supabase.from('crisis_events').insert({
+      user_id: user.id,
+      message_id: persistedMessageId,
+      crisis_tier: crisisTier,
+      message_text: textContent,
+      resolved: false,
+    })
+    if (crisisErr) {
+      console.error('[chat] failed to persist tier-3 crisis_event:', crisisErr)
+    }
   }
 
   const result = streamText({

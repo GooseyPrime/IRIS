@@ -42,10 +42,16 @@ export function useChatSession(sessionId: string, userContext?: UserContext) {
 
       const tier = detectCrisis(trimmed)
 
-      // Tier 1 / 2: scripted response only — AI never processes this message
+      // Tier 1 / 2: scripted response only — AI never processes this message.
+      // Fire-and-forget to persist the disclosure and create an audit record.
       if (tier === 1 || tier === 2) {
         setCrisisState({ tier, response: CRISIS_RESPONSES[tier] })
         setInput('')
+        fetch('/api/crisis', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ message: trimmed, conversationId: sessionId, tier }),
+        }).catch((err) => console.error('[useChatSession] crisis persist error:', err))
         return
       }
 
