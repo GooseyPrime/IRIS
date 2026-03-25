@@ -143,6 +143,27 @@ export const ReflectionSummaryRequestSchema = z.object({
 export type ReflectionSummaryRequest = z.infer<typeof ReflectionSummaryRequestSchema>
 
 // ---------------------------------------------------------------------------
+// Conversation history
+// ---------------------------------------------------------------------------
+
+export const SESSIONS_PAGE_SIZE = 10 as const
+
+export interface SessionPreview {
+  id: string
+  title: string | null
+  createdAt: string
+  endedAt: string | null
+  messageCount: number
+  lastMessagePreview: string | null
+}
+
+export const PaginatedSessionsSchema = z.object({
+  cursor: z.string().datetime().optional(),
+})
+
+export type PaginatedSessionsInput = z.infer<typeof PaginatedSessionsSchema>
+
+// ---------------------------------------------------------------------------
 // Assessments
 // ---------------------------------------------------------------------------
 
