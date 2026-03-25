@@ -136,12 +136,9 @@ function NoDateState() {
           second for you.
         </p>
       </div>
-      <a
-        href="/settings"
-        className="font-sans text-sm text-iris-400 hover:text-iris-300 underline underline-offset-2 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-iris-500 focus-visible:ring-offset-2 focus-visible:ring-offset-surface-0"
-      >
-        Add sobriety date →
-      </a>
+      <p className="font-sans text-xs text-text-muted">
+        Update your sobriety date during onboarding to begin tracking.
+      </p>
     </div>
   )
 }
