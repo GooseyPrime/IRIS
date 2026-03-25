@@ -7,6 +7,7 @@ const CrisisReportSchema = z.object({
   message: z.string().min(1).max(10000),
   conversationId: z.string().uuid(),
   tier: z.union([z.literal(1), z.literal(2)]),
+  matchedPattern: z.string().max(500).nullable().optional(),
 })
 
 /**

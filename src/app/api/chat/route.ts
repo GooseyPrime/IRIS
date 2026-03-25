@@ -51,7 +51,7 @@ export async function POST(req: Request) {
       .join('')
   }
 
-  const crisisTier = textContent ? detectCrisis(textContent) : null
+  const crisisDetection = textContent ? detectCrisis(textContent) : { tier: null, matchedPattern: null }
 
   let persistedMessageId: string | null = null
   if (textContent) {
@@ -62,8 +62,8 @@ export async function POST(req: Request) {
         role: 'user',
         content: textContent,
         user_id: user.id,
-        flagged_crisis: crisisTier !== null,
-        crisis_tier: crisisTier,
+        flagged_crisis: crisisDetection.tier !== null,
+        crisis_tier: crisisDetection.tier,
       })
       .select('id')
       .single()
@@ -75,14 +75,13 @@ export async function POST(req: Request) {
   }
 
   // --- Server-side crisis gate ---
-  // Tier 1 / 2: never route to GPT-4o; return a scripted response and log an audit record.
-  if (crisisTier === 1 || crisisTier === 2) {
-    const scriptedResponse = CRISIS_RESPONSES[crisisTier]
+  if (crisisDetection.tier === 1 || crisisDetection.tier === 2) {
+    const scriptedResponse = CRISIS_RESPONSES[crisisDetection.tier]
 
     const { error: crisisErr } = await supabase.from('crisis_events').insert({
       user_id: user.id,
       message_id: persistedMessageId,
-      crisis_tier: crisisTier,
+      crisis_tier: crisisDetection.tier,
       message_text: textContent,
       resolved: false,
     })
@@ -90,7 +89,6 @@ export async function POST(req: Request) {
       console.error('[chat] failed to persist crisis_event:', crisisErr)
     }
 
-    // Persist the scripted assistant reply for the conversation history
     const { error: replyErr } = await supabase.from('messages').insert({
       conversation_id: conversationId,
       role: 'assistant',
@@ -116,12 +114,11 @@ export async function POST(req: Request) {
     return createUIMessageStreamResponse({ stream })
   }
 
-  // Tier 3: log audit record but continue to GPT-4o
-  if (crisisTier === 3) {
+  if (crisisDetection.tier === 3) {
     const { error: crisisErr } = await supabase.from('crisis_events').insert({
       user_id: user.id,
       message_id: persistedMessageId,
-      crisis_tier: crisisTier,
+      crisis_tier: crisisDetection.tier,
       message_text: textContent,
       resolved: false,
     })

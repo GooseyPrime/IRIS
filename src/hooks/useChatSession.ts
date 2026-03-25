@@ -4,7 +4,7 @@ import { useCallback, useState } from 'react'
 import { useChat } from '@ai-sdk/react'
 import { DefaultChatTransport } from 'ai'
 import { detectCrisis, CRISIS_RESPONSES } from '@/lib/crisis-detection'
-import type { CrisisTier } from '@/lib/crisis-detection'
+import type { CrisisTier, CrisisDetectionResult } from '@/lib/crisis-detection'
 
 export interface UserContext {
   name: string
@@ -40,26 +40,28 @@ export function useChatSession(sessionId: string, userContext?: UserContext) {
       const trimmed = text.trim()
       if (!trimmed) return
 
-      const tier = detectCrisis(trimmed)
+      const detection: CrisisDetectionResult = detectCrisis(trimmed)
 
-      // Tier 1 / 2: scripted response only — AI never processes this message.
-      // Fire-and-forget to persist the disclosure and create an audit record.
-      if (tier === 1 || tier === 2) {
-        setCrisisState({ tier, response: CRISIS_RESPONSES[tier] })
+      if (detection.tier === 1 || detection.tier === 2) {
+        setCrisisState({ tier: detection.tier, response: CRISIS_RESPONSES[detection.tier] })
         setInput('')
         fetch('/api/crisis', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ message: trimmed, conversationId: sessionId, tier }),
+          body: JSON.stringify({
+            message: trimmed,
+            conversationId: sessionId,
+            tier: detection.tier,
+            matchedPattern: detection.matchedPattern,
+          }),
         }).catch((err) => console.error('[useChatSession] crisis persist error:', err))
         return
       }
 
       clearError()
 
-      // Tier 3: let it through but surface the nudge alongside normal stream
-      if (tier === 3) {
-        setCrisisState({ tier, response: CRISIS_RESPONSES[3] })
+      if (detection.tier === 3) {
+        setCrisisState({ tier: detection.tier, response: CRISIS_RESPONSES[3] })
       }
 
       sendMessage(
