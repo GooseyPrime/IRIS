@@ -6,18 +6,10 @@ export const metadata = {
 export default function HomePage() {
   return (
     <>
-      <header className="fixed top-0 inset-x-0 z-50 flex items-center justify-between px-6 py-4 bg-black/30 backdrop-blur-md border-b border-white/5">
+      <header className="fixed top-0 inset-x-0 z-50 flex items-center px-6 py-4 bg-black/30 backdrop-blur-md border-b border-white/5">
         <span className="font-serif font-light text-xl tracking-tight text-zinc-100">
           IRIS
         </span>
-        <nav className="flex items-center gap-6">
-          <a
-            href="/donate"
-            className="text-sm uppercase tracking-widest text-zinc-300 hover:text-white transition-colors duration-200"
-          >
-            Sponsor a User
-          </a>
-        </nav>
       </header>
 
       <main className="flex flex-1 flex-col items-center justify-center min-h-screen px-6 pt-20">
