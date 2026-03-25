@@ -1,0 +1,111 @@
+---
+description: "Agent workflow — autonomous development instructions, task discipline, and quality gates"
+alwaysApply: true
+---
+
+# IRIS — Agent Workflow Instructions
+
+## Before You Write Any Code
+
+1. **Read types first.** Check `src/types/` and `src/types/database.ts` before touching any data logic.
+2. **Understand the existing pattern.** Look at a similar file in the codebase before creating a new one.
+3. **State your plan.** Briefly explain your approach and the files you'll touch before executing.
+4. **Use Plan Mode first** for any task touching auth, RLS, middleware, or the database schema.
+
+## Task Discipline
+
+> **One task per chat session.** Long sessions degrade agent performance. Start a new chat for each distinct task.
+
+- Keep each session to a single feature, fix, or refactor.
+- If you discover a second issue while working, note it (e.g., `// TODO: [issue description]`) and address it in a new session.
+- Never refactor unrelated code while implementing a feature.
+
+## Build Order
+
+Always build in this order to minimize circular dependency and type errors:
+
+1. **Types** (`src/types/`) — define Zod schemas and TypeScript types first
+2. **Database** — write the SQL migration if needed
+3. **Server logic** — route handlers, Server Actions, lib utilities
+4. **Hooks** — client-side data-fetching or state hooks
+5. **Components** — UI last, using the types and hooks you've already built
+6. **Loading + Error states** — required for every async boundary
+
+## Quality Gates (Run After Every Change)
+
+```bash
+pnpm typecheck    # Zero TypeScript errors required
+pnpm lint         # Zero ESLint errors required
+pnpm build        # Verify no build-time errors
+```
+
+Never submit code that fails `pnpm typecheck`.
+
+## Coding Standards Checklist
+
+Before marking a task complete, verify:
+- [ ] All inputs validated with Zod schemas
+- [ ] Auth check present in every route handler and Server Action
+- [ ] Loading state handled (skeleton, spinner, or `loading.tsx`)
+- [ ] Error state handled (error boundary or inline error message)
+- [ ] No `any` types — use `unknown` + narrowing or Zod
+- [ ] No deprecated patterns (`auth-helpers-nextjs`, Pages Router, `getSession()`)
+- [ ] RLS policies exist for any new table
+- [ ] Named exports used (except `page.tsx`, `layout.tsx`, `route.ts`)
+- [ ] `@/` path aliases used — no relative `../../` imports
+
+## File Creation Checklist
+
+When creating a new file:
+1. Does a similar file already exist? Model yours after it.
+2. Is the file in the right directory per the architecture?
+3. Does it export named exports only (except page/layout/route)?
+4. Does it use the correct client (browser vs server Supabase)?
+
+## Supabase Safety Checklist
+
+- [ ] Using `@supabase/ssr` — not `auth-helpers-nextjs`
+- [ ] Server: `createClient()` from `@/lib/supabase/server`
+- [ ] Client: `createClient()` from `@/lib/supabase/client`
+- [ ] Auth check uses `supabase.auth.getUser()` — not `getSession()`
+- [ ] `SUPABASE_SERVICE_ROLE_KEY` only in server-only code, never in client bundle
+- [ ] New table has RLS enabled with explicit policies
+
+## Crisis Safety Checklist (for chat/message features)
+
+- [ ] Crisis detection runs client-side BEFORE message is sent to API
+- [ ] Crisis responses are scripted — not AI-generated
+- [ ] Crisis events are logged to the `crisis_events` table
+- [ ] Tier 1 crises surface 988 / SAMHSA / Crisis Text Line immediately
+- [ ] The AI system prompt explicitly instructs IRIS to escalate crisis signals
+
+## Boundaries — Ask Before Doing
+
+Do **not** proceed autonomously on these without explicit approval:
+
+- **Schema migrations** — any `ALTER TABLE`, `DROP`, or RLS policy change
+- **New npm dependencies** — check for security advisories first
+- **Middleware changes** — auth flow is critical path
+- **Environment variables** — never add or change `.env` values without confirmation
+- **API route changes** — any change to public API contracts
+
+## Commit Message Format
+
+```
+<type>(<scope>): <short description>
+
+type: feat | fix | refactor | style | docs | test | chore
+scope: auth | chat | ui | api | db | types | config
+
+Examples:
+feat(chat): add crisis detection pre-send layer
+fix(auth): use getUser() instead of getSession() in middleware
+refactor(types): extract CheckIn schema to shared types file
+```
+
+## When You're Stuck
+
+1. Check the relevant `.cursor/rules/*.mdc` file for the pattern.
+2. Look at an existing working example in the codebase.
+3. Check `AGENTS.md` for architecture context and security boundaries.
+4. If still stuck, **stop and ask** rather than guessing or using deprecated patterns.

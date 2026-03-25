@@ -1,0 +1,191 @@
+---
+description: "Tailwind CSS v4 + IRIS design tokens — color palette, typography, component patterns"
+globs: ["src/components/**"]
+---
+
+# IRIS — Tailwind & Visual Identity
+
+## Design Token Reference
+
+### Color Palette
+```css
+/* globals.css — CSS custom properties */
+:root {
+  /* Surfaces */
+  --color-surface-0: #0A0A0F;   /* Primary background */
+  --color-surface-1: #121218;   /* Cards / elevated */
+  --color-surface-2: #1A1A24;   /* Hover states / inputs */
+
+  /* Iris purple scale */
+  --color-iris-50:  #F0ECFF;
+  --color-iris-100: #DDD6FF;
+  --color-iris-200: #C2B3FF;
+  --color-iris-300: #A48EFF;
+  --color-iris-400: #8A6FF8;
+  --color-iris-500: #6B4CE6;   /* Primary accent */
+  --color-iris-600: #5A3FD3;   /* Buttons / links */
+  --color-iris-700: #4A32B8;
+  --color-iris-800: #3A2690;
+  --color-iris-900: #2A1278;
+
+  /* Gold scale */
+  --color-gold-50:  #FFF8E6;
+  --color-gold-100: #FEEFC2;
+  --color-gold-200: #FDE495;
+  --color-gold-300: #FCD468;
+  --color-gold-400: #F5C542;   /* Warm gold */
+  --color-gold-500: #D4A843;   /* Sacred gold highlight */
+  --color-gold-600: #B38A2E;
+  --color-gold-700: #8F6D1E;
+  --color-gold-800: #6E5014;
+  --color-gold-900: #5C4710;
+
+  /* Text */
+  --color-text-primary:   #F0ECF9;  /* Warm off-white — ~15:1 contrast */
+  --color-text-secondary: #A8A3B8;  /* Muted lavender-gray */
+  --color-text-muted:     #6B6780;  /* Captions, timestamps */
+
+  /* Semantic */
+  --color-success: #4ADE80;
+  --color-error:   #F87171;
+
+  /* Gradients */
+  --gradient-sacred-iris: linear-gradient(135deg, #5A3FD3, #7B5EF6, #9B85FF);
+  --gradient-iris-to-gold: linear-gradient(135deg, #5A3FD3, #7B5EF6, #D4A843);
+  --gradient-night-bloom: linear-gradient(180deg, #0A0A0F 0%, #1A1030 50%, #0A0A0F 100%);
+
+  /* Typography */
+  --font-serif: 'Cormorant Garamond', Georgia, serif;
+  --font-sans:  'DM Sans', system-ui, sans-serif;
+}
+```
+
+### Tailwind Config Extensions
+```typescript
+// tailwind.config.ts
+import type { Config } from 'tailwindcss'
+
+export default {
+  content: ['./src/**/*.{ts,tsx}'],
+  theme: {
+    extend: {
+      colors: {
+        surface: { 0: '#0A0A0F', 1: '#121218', 2: '#1A1A24' },
+        iris: {
+          50: '#F0ECFF', 100: '#DDD6FF', 200: '#C2B3FF', 300: '#A48EFF',
+          400: '#8A6FF8', 500: '#6B4CE6', 600: '#5A3FD3', 700: '#4A32B8',
+          800: '#3A2690', 900: '#2A1278',
+        },
+        gold: {
+          50: '#FFF8E6', 100: '#FEEFC2', 200: '#FDE495', 300: '#FCD468',
+          400: '#F5C542', 500: '#D4A843', 600: '#B38A2E', 700: '#8F6D1E',
+          800: '#6E5014', 900: '#5C4710',
+        },
+      },
+      fontFamily: {
+        serif: ['var(--font-serif)'],
+        sans:  ['var(--font-sans)'],
+      },
+      backgroundImage: {
+        'sacred-iris':   'linear-gradient(135deg, #5A3FD3, #7B5EF6, #9B85FF)',
+        'iris-to-gold':  'linear-gradient(135deg, #5A3FD3, #7B5EF6, #D4A843)',
+        'night-bloom':   'linear-gradient(180deg, #0A0A0F 0%, #1A1030 50%, #0A0A0F 100%)',
+      },
+      animation: {
+        'fade-up': 'fadeUp 0.8s ease forwards',
+      },
+      keyframes: {
+        fadeUp: {
+          from: { opacity: '0', transform: 'translateY(40px)' },
+          to:   { opacity: '1', transform: 'translateY(0)' },
+        },
+      },
+    },
+  },
+} satisfies Config
+```
+
+## Typography Conventions
+```tsx
+{/* Hero display — Cormorant Garamond Light */}
+<h1 className="font-serif font-light text-[clamp(4.5rem,12vw,12rem)] leading-[0.9] tracking-[-0.03em] text-[#F0ECF9]">
+  I Rise, I Shine
+</h1>
+
+{/* Section headline with gold overline */}
+<div>
+  <p className="text-[0.75rem] uppercase tracking-[0.2em] text-gold-500 mb-3">
+    Your Journey
+  </p>
+  <h2 className="font-serif font-semibold text-4xl text-[#F0ECF9]">
+    Every Day Counts
+  </h2>
+</div>
+
+{/* Body text — DM Sans */}
+<p className="font-sans text-[18px] leading-[1.7] text-[#A8A3B8]">
+  Supporting copy goes here.
+</p>
+```
+
+## Component Patterns
+
+### Cards
+```tsx
+// Elevated card on surface-1
+<div className="bg-[#121218] rounded-2xl border border-iris-900/30 p-6">
+  {/* content */}
+</div>
+
+// Interactive card with hover
+<div className="bg-[#121218] rounded-2xl border border-iris-900/30 p-6
+                hover:border-iris-600/50 hover:bg-[#1A1A24]
+                transition-all duration-300 cursor-pointer">
+  {/* content */}
+</div>
+```
+
+### Buttons
+```tsx
+// Primary CTA — Sacred Iris gradient
+<button className="bg-sacred-iris text-white font-sans font-medium
+                   px-8 py-4 rounded-xl
+                   hover:opacity-90 active:scale-[0.98]
+                   transition-all duration-200">
+  Begin Your Journey
+</button>
+
+// Secondary — ghost
+<button className="border border-iris-600 text-iris-400 font-sans font-medium
+                   px-8 py-4 rounded-xl
+                   hover:bg-iris-600/10
+                   transition-all duration-200">
+  Learn More
+</button>
+```
+
+### Inputs
+```tsx
+<input
+  className="w-full bg-[#1A1A24] border border-iris-900/50 rounded-xl
+             px-4 py-3 font-sans text-[#F0ECF9] placeholder:text-[#6B6780]
+             focus:outline-none focus:border-iris-500
+             transition-colors duration-200"
+/>
+```
+
+### Scroll Animations
+```tsx
+// Use Intersection Observer for fade-in-up reveals
+// Apply 150ms stagger between children
+<div className="animate-fade-up" style={{ animationDelay: `${index * 150}ms` }}>
+  {children}
+</div>
+```
+
+## Accessibility
+- All text must meet WCAG AA contrast (4.5:1 for normal, 3:1 for large).
+- `#F0ECF9` on `#0A0A0F` ≈ 15:1 — far exceeds requirements.
+- `#A8A3B8` on `#0A0A0F` ≈ 7:1 — passes AA.
+- Never use color alone to convey meaning; pair with icons or labels.
+- Focus rings: `focus-visible:ring-2 focus-visible:ring-iris-500 focus-visible:ring-offset-2 focus-visible:ring-offset-[#0A0A0F]`.

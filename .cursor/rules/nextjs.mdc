@@ -1,0 +1,122 @@
+---
+description: "Next.js 15 App Router patterns — layouts, pages, server actions, route handlers"
+globs: ["src/app/**"]
+---
+
+# IRIS — Next.js App Router Patterns
+
+## Directory Conventions
+```
+src/app/
+├── layout.tsx          # Root layout (fonts, providers, global styles)
+├── page.tsx            # Landing / home page
+├── (auth)/             # Route group — auth pages share a layout
+│   ├── layout.tsx
+│   ├── login/page.tsx
+│   └── onboarding/page.tsx
+├── (app)/              # Route group — authenticated app shell
+│   ├── layout.tsx      # Auth guard + sidebar
+│   ├── dashboard/page.tsx
+│   ├── chat/
+│   │   ├── page.tsx
+│   │   └── [id]/page.tsx
+│   └── settings/page.tsx
+└── api/
+    ├── chat/route.ts
+    └── webhooks/stripe/route.ts
+```
+
+## Server Components (default)
+```typescript
+// src/app/(app)/dashboard/page.tsx
+import { createClient } from '@/lib/supabase/server'
+import { redirect } from 'next/navigation'
+
+export default async function DashboardPage() {
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+
+  if (!user) redirect('/login')
+
+  return <Dashboard userId={user.id} />
+}
+```
+
+## Client Components
+```typescript
+'use client'
+// Only add 'use client' when you need:
+// - useState / useEffect / useCallback / useMemo
+// - Browser APIs (window, localStorage)
+// - Event handlers that require interactivity beyond <form> actions
+// - Third-party hooks (useChat, etc.)
+```
+
+## Route Handlers
+```typescript
+// src/app/api/example/route.ts
+import { NextResponse } from 'next/server'
+import { z } from 'zod'
+import { createClient } from '@/lib/supabase/server'
+
+const RequestSchema = z.object({
+  message: z.string().min(1).max(2000),
+})
+
+export async function POST(req: Request) {
+  try {
+    const body = await req.json()
+    const { message } = RequestSchema.parse(body)
+
+    const supabase = await createClient()
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+
+    // ... business logic
+
+    return NextResponse.json({ success: true })
+  } catch (error) {
+    if (error instanceof z.ZodError) {
+      return NextResponse.json({ error: error.errors }, { status: 400 })
+    }
+    return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
+  }
+}
+```
+
+## Server Actions
+```typescript
+'use server'
+import { z } from 'zod'
+import { createClient } from '@/lib/supabase/server'
+import { revalidatePath } from 'next/cache'
+
+const Schema = z.object({ field: z.string().min(1) })
+
+export async function myAction(formData: FormData) {
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return { success: false, error: 'Unauthorized' } as const
+
+  const parsed = Schema.safeParse({ field: formData.get('field') })
+  if (!parsed.success) return { success: false, error: 'Invalid input' } as const
+
+  // ... persist
+  revalidatePath('/dashboard')
+  return { success: true } as const
+}
+```
+
+## Metadata
+```typescript
+// Always provide metadata on page files
+export const metadata = {
+  title: 'IRIS — I Rise, I Shine',
+  description: 'Your AI sobriety companion',
+}
+```
+
+## Loading & Error Boundaries
+- Create `loading.tsx` for every route that fetches data.
+- Create `error.tsx` with `'use client'` for graceful error recovery.
+- Create `not-found.tsx` for missing resources.

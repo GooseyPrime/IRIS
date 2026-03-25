@@ -1,0 +1,242 @@
+---
+description: "Vercel AI SDK v6 streaming chat — streamText, useChat, sendMessage, crisis detection"
+globs: ["src/app/api/chat/**", "src/hooks/useChat*"]
+---
+
+# IRIS — Vercel AI SDK v6 Patterns
+
+## ⚠️ v6 API — Breaking Changes from v4
+
+| v4 (old) | v6 (current) |
+|----------|--------------|
+| `handleSubmit(e)` | `sendMessage({ text }, { body })` |
+| `append({ role, content })` | `sendMessage({ text })` |
+| `isLoading: boolean` | `status: 'submitted' \| 'streaming' \| 'ready' \| 'error'` |
+| `message.content: string` | `message.parts: Part[]` |
+| body at hook level | body as second arg to `sendMessage` |
+
+Core packages:
+- `ai` (v6)
+- `@ai-sdk/react` (v6)
+- `@ai-sdk/openai` (v3)
+
+## Route Handler
+```typescript
+// src/app/api/chat/route.ts
+import { openai } from '@ai-sdk/openai'
+import { streamText, type UIMessage, convertToModelMessages } from 'ai'
+import { createClient } from '@/lib/supabase/server'
+import { z } from 'zod'
+
+export const maxDuration = 60
+
+const RequestSchema = z.object({
+  messages: z.array(z.any()),  // UIMessage[] — validated structurally
+  id: z.string().uuid(),
+  userContext: z.object({
+    name: z.string(),
+    daysSober: z.number().int().min(0),
+    tone: z.string(),
+    triggers: z.array(z.string()),
+  }).optional(),
+})
+
+export async function POST(req: Request) {
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return new Response('Unauthorized', { status: 401 })
+
+  const body = RequestSchema.parse(await req.json())
+  const { messages, id, userContext } = body
+
+  const systemPrompt = buildSystemPrompt(userContext)
+
+  const result = streamText({
+    model: openai('gpt-4o'),
+    system: systemPrompt,
+    messages: await convertToModelMessages(messages as UIMessage[]),
+    temperature: 0.7,
+    maxTokens: 2048,
+    abortSignal: req.signal,
+  })
+
+  return result.toUIMessageStreamResponse({
+    originalMessages: messages as UIMessage[],
+    onFinish: async ({ responseMessage }) => {
+      const textContent = responseMessage.parts
+        .filter((p): p is { type: 'text'; text: string } => p.type === 'text')
+        .map(p => p.text)
+        .join('')
+
+      await supabase.from('messages').insert({
+        conversation_id: id,
+        role: 'assistant',
+        content: textContent,
+        user_id: user.id,
+      })
+    },
+  })
+}
+
+function buildSystemPrompt(userContext?: {
+  name: string
+  daysSober: number
+  tone: string
+  triggers: string[]
+}): string {
+  return `You are IRIS, a compassionate AI sobriety companion — not a therapist.
+${userContext
+    ? `The user's name is ${userContext.name}. They are ${userContext.daysSober} days sober.
+Preferred tone: ${userContext.tone}.
+Known triggers: ${userContext.triggers.join(', ')}.`
+    : ''
+  }
+
+Guidelines:
+- Never shame relapse. Normalize it as part of recovery.
+- If the user expresses suicidal ideation or self-harm, STOP and provide scripted crisis resources.
+- You are NOT a therapist. Never diagnose, prescribe, or use clinical language.
+- Be warm, specific, and grounded in evidence-based recovery principles (CBT, MI, SMART Recovery).
+- Never use the words "therapy", "treatment", or "diagnosis".`
+}
+```
+
+## Client-Side useChat Hook
+```typescript
+// src/hooks/useChatSession.ts
+'use client'
+import { useChat } from '@ai-sdk/react'
+import { useState, useCallback } from 'react'
+
+interface UserContext {
+  name: string
+  daysSober: number
+  tone: string
+  triggers: string[]
+}
+
+export function useChatSession(sessionId: string, userContext?: UserContext) {
+  const [input, setInput] = useState('')
+
+  const { messages, sendMessage, status, stop, error } = useChat({
+    id: sessionId,
+    onError: (err) => { console.error('Chat error:', err) },
+  })
+
+  const handleSubmit = useCallback(
+    (e: React.FormEvent) => {
+      e.preventDefault()
+      const trimmed = input.trim()
+      if (!trimmed || status !== 'ready') return
+
+      sendMessage(
+        { text: trimmed },
+        { body: { id: sessionId, userContext } },
+      )
+      setInput('')
+    },
+    [input, sendMessage, sessionId, userContext, status],
+  )
+
+  return { messages, status, error, input, setInput, handleSubmit, stop }
+}
+```
+
+## Rendering message.parts
+```tsx
+// ALWAYS use message.parts, never message.content
+{messages.map((message) => (
+  <div key={message.id}>
+    {message.parts.map((part, i) => {
+      if (part.type === 'text') {
+        return <p key={i}>{part.text}</p>
+      }
+      // Handle other part types as needed
+      return null
+    })}
+  </div>
+))}
+```
+
+## Status-Driven UI
+```tsx
+// status: 'submitted' | 'streaming' | 'ready' | 'error'
+const isDisabled = status === 'submitted' || status === 'streaming'
+
+<button type="submit" disabled={isDisabled}>
+  {status === 'streaming' ? (
+    <><Spinner /> Stop</>
+  ) : 'Send'}
+</button>
+
+{status === 'error' && (
+  <p className="text-[#F87171] text-sm">
+    Something went wrong. Please try again.
+  </p>
+)}
+```
+
+## Crisis Detection (Pre-AI Layer)
+```typescript
+// src/lib/crisis-detection.ts
+// Run BEFORE sending message to the AI — scripted responses, not AI-generated
+
+const CRISIS_PATTERNS = {
+  tier1: [
+    /\b(suicide|suicidal|kill myself|end my life|want to die)\b/i,
+    /\b(self.?harm|cut myself|hurt myself)\b/i,
+  ],
+  tier2: [
+    /\b(don't want to be here|can't go on|no reason to live)\b/i,
+    /\b(everyone would be better off without me)\b/i,
+    /\b(ready to go home|go to sleep forever)\b/i,
+  ],
+  tier3: [
+    /\b(I wonder if anyone would notice)\b/i,
+    /\b(feeling hopeless|no hope)\b/i,
+  ],
+}
+
+export type CrisisTier = 1 | 2 | 3 | null
+
+export function detectCrisis(text: string): CrisisTier {
+  if (CRISIS_PATTERNS.tier1.some(p => p.test(text))) return 1
+  if (CRISIS_PATTERNS.tier2.some(p => p.test(text))) return 2
+  if (CRISIS_PATTERNS.tier3.some(p => p.test(text))) return 3
+  return null
+}
+
+// SCRIPTED responses — never AI-generated for crisis situations
+export const CRISIS_RESPONSES: Record<1 | 2 | 3, string> = {
+  1: `I hear you, and I'm glad you're still here talking with me. What you're feeling is real, and you deserve support right now.
+
+**Please reach out immediately:**
+- 📞 **988 Suicide & Crisis Lifeline** — call or text 988
+- 📱 **Crisis Text Line** — text HOME to 741741
+- 📞 **SAMHSA Helpline** — 1-800-662-4357
+- 🚨 **Emergency** — 911
+
+You don't have to face this alone. These lines are free, confidential, and available 24/7.`,
+  2: `It sounds like things feel really heavy right now. That takes courage to share.
+
+When you're ready, please consider reaching out:
+- 📞 **988 Suicide & Crisis Lifeline** — call or text 988
+- 📱 **Crisis Text Line** — text HOME to 741741
+
+I'm here with you, and I also want you to have human support.`,
+  3: `I noticed something in what you shared, and I want to check in. How are you really doing right now?
+
+If things feel overwhelming, you can always reach **988** (call or text) — they're there for exactly these moments.`,
+}
+```
+
+## Stream Persistence Guarantee
+```typescript
+// To guarantee DB write even if client disconnects mid-stream,
+// consume the stream before returning the response:
+import { consumeStream } from 'ai'
+
+// After streamText call:
+await consumeStream(result.textStream)
+return result.toUIMessageStreamResponse({ ... })
+```
