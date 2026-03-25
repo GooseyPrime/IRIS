@@ -36,36 +36,6 @@ const MILESTONES: readonly Milestone[] = [
 ]
 
 /**
- * Parse a sobriety date string into a local-timezone Date.
- * Date-only strings (`YYYY-MM-DD`) are treated as local midnight so that
- * the day/hour counters roll over at midnight in the user's own timezone
- * rather than UTC midnight.
- *
- * Exported for unit testing.
- */
-export function parseSobrietyDate(iso: string): Date {
-  // Date-only strings (no time component) would otherwise be parsed as UTC
-  // midnight by the JS Date constructor, which is wrong for non-UTC users.
-  if (/^\d{4}-\d{2}-\d{2}$/.test(iso)) {
-    const parts = iso.split('-')
-    if (parts.length === 3) {
-      const [yearStr, monthStr, dayStr] = parts
-      if (yearStr && monthStr && dayStr) {
-        const year = Number(yearStr)
-        const month = Number(monthStr)
-        const day = Number(dayStr)
-        if (Number.isFinite(year) && Number.isFinite(month) && Number.isFinite(day)) {
-          const local = new Date(year, month - 1, day)
-          // Fall back to the standard parser if the components produced an invalid date
-          if (!Number.isNaN(local.getTime())) return local
-        }
-      }
-    }
-  }
-  return new Date(iso)
-}
-
-/**
  * Compute how much time has elapsed since `sobrietyDate`.
  * Returns zero-values if the date is in the future (edge case: relapse today).
  */
@@ -73,7 +43,7 @@ export function computeSobrietyTime(
   sobrietyDateIso: string,
   now: Date = new Date(),
 ): SobrietyTime {
-  const start = parseSobrietyDate(sobrietyDateIso)
+  const start = new Date(sobrietyDateIso)
   const elapsedMs = Math.max(0, now.getTime() - start.getTime())
   const totalSeconds = Math.floor(elapsedMs / 1000)
 

@@ -1,6 +1,7 @@
 import { redirect, notFound } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
 import { ChatShell } from '@/components/chat/ChatShell'
+import { ChatInterface } from '@/components/chat/ChatInterface'
 import { computeSobrietyTime } from '@/lib/sobriety'
 import type { Metadata } from 'next'
 
@@ -56,41 +57,11 @@ export default async function ChatSessionPage({
     : undefined
 
   return (
-    <div className="flex flex-col h-screen bg-surface-0">
-      <ChatHeader />
-      <ChatShell sessionId={session.id} userContext={userContext} />
-    </div>
-  )
-}
-
-function ChatHeader() {
-  return (
-    <header className="sticky top-0 z-10 flex items-center justify-between px-4 py-3 border-b border-iris-900/20 bg-surface-0/90 backdrop-blur-sm">
-      <a
-        href="/dashboard"
-        className="flex items-center gap-2 text-text-secondary hover:text-text-primary transition-colors font-sans text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-iris-500 rounded"
-      >
-        <svg
-          width="16"
-          height="16"
-          viewBox="0 0 16 16"
-          fill="none"
-          aria-hidden="true"
-        >
-          <path
-            d="M10 3L5 8l5 5"
-            stroke="currentColor"
-            strokeWidth="1.5"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-          />
-        </svg>
-        Back
-      </a>
-      <span className="font-serif font-light text-lg tracking-tight text-text-primary">
-        IRIS
-      </span>
-      <div className="w-12" />
-    </header>
+    <ChatShell displayName={profile?.display_name ?? null}>
+      <ChatInterface
+        sessionId={session.id}
+        {...(userContext !== undefined ? { userContext } : {})}
+      />
+    </ChatShell>
   )
 }

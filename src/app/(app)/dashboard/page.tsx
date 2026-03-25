@@ -47,7 +47,6 @@ export default async function DashboardPage() {
           title="Daily Check-in"
           description="How are you feeling today?"
           href="/check-in"
-          comingSoon
         />
         <PlaceholderCard
           title="Talk to IRIS"
