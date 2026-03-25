@@ -13,11 +13,11 @@ interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
 
 const variantClasses: Record<Variant, string> = {
   primary:
-    'bg-sacred-iris text-white hover:opacity-90 active:scale-[0.98] disabled:opacity-50',
+    'bg-white/10 border border-white/20 text-white backdrop-blur-md hover:bg-white/20 active:scale-[0.98] disabled:opacity-40',
   ghost:
-    'border border-iris-600 text-iris-400 hover:bg-iris-600/10 disabled:opacity-50',
+    'border border-white/10 text-zinc-300 backdrop-blur-md hover:bg-white/10 hover:text-white disabled:opacity-40',
   destructive:
-    'border border-error/50 text-error hover:bg-error/10 disabled:opacity-50',
+    'border border-red-900/50 text-error bg-red-950/20 backdrop-blur-md hover:bg-red-950/40 disabled:opacity-40',
 }
 
 const sizeClasses: Record<Size, string> = {
@@ -42,7 +42,7 @@ export function Button({
         'inline-flex items-center justify-center gap-2',
         'font-sans font-medium',
         'transition-all duration-200',
-        'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-iris-500 focus-visible:ring-offset-2 focus-visible:ring-offset-surface-0',
+        'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-iris-500 focus-visible:ring-offset-2 focus-visible:ring-offset-black',
         variantClasses[variant],
         sizeClasses[size],
         className,
