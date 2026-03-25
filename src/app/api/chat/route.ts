@@ -10,6 +10,7 @@ import {
 import { createClient } from '@/lib/supabase/server'
 import { ChatRequestSchema } from '@/types'
 import { detectCrisis, CRISIS_RESPONSES } from '@/lib/crisis-detection'
+import { logCrisisEvent } from '@/lib/log-crisis-event'
 
 export const maxDuration = 60
 
@@ -78,16 +79,13 @@ export async function POST(req: Request) {
   if (crisisDetection.tier === 1 || crisisDetection.tier === 2) {
     const scriptedResponse = CRISIS_RESPONSES[crisisDetection.tier]
 
-    const { error: crisisErr } = await supabase.from('crisis_events').insert({
-      user_id: user.id,
-      message_id: persistedMessageId,
-      crisis_tier: crisisDetection.tier,
-      message_text: textContent,
-      resolved: false,
+    await logCrisisEvent({
+      supabase,
+      userId: user.id,
+      messageId: persistedMessageId,
+      crisisTier: crisisDetection.tier,
+      messageText: textContent,
     })
-    if (crisisErr) {
-      console.error('[chat] failed to persist crisis_event:', crisisErr)
-    }
 
     const { error: replyErr } = await supabase.from('messages').insert({
       conversation_id: conversationId,
@@ -115,16 +113,13 @@ export async function POST(req: Request) {
   }
 
   if (crisisDetection.tier === 3) {
-    const { error: crisisErr } = await supabase.from('crisis_events').insert({
-      user_id: user.id,
-      message_id: persistedMessageId,
-      crisis_tier: crisisDetection.tier,
-      message_text: textContent,
-      resolved: false,
+    await logCrisisEvent({
+      supabase,
+      userId: user.id,
+      messageId: persistedMessageId,
+      crisisTier: crisisDetection.tier,
+      messageText: textContent,
     })
-    if (crisisErr) {
-      console.error('[chat] failed to persist tier-3 crisis_event:', crisisErr)
-    }
   }
 
   const result = streamText({

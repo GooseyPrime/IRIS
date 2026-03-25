@@ -1,4 +1,5 @@
 import { createClient } from '@/lib/supabase/server'
+import { logCrisisEvent } from '@/lib/log-crisis-event'
 import { z } from 'zod'
 
 export const dynamic = 'force-dynamic'
@@ -67,17 +68,15 @@ export async function POST(req: Request) {
     })
   }
 
-  // Write an immutable crisis audit record
-  const { error: crisisErr } = await supabase.from('crisis_events').insert({
-    user_id: user.id,
-    message_id: messageRow.id,
-    crisis_tier: tier,
-    message_text: message,
-    resolved: false,
+  const auditResult = await logCrisisEvent({
+    supabase,
+    userId: user.id,
+    messageId: messageRow.id,
+    crisisTier: tier,
+    messageText: message,
   })
 
-  if (crisisErr) {
-    console.error('[crisis] failed to persist crisis_event:', crisisErr)
+  if (!auditResult.success) {
     return new Response(JSON.stringify({ error: 'Failed to persist crisis event' }), {
       status: 500,
       headers: { 'Content-Type': 'application/json' },
