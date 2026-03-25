@@ -1,6 +1,7 @@
 'use client'
 
 import type { CrisisState } from '@/hooks/useChatSession'
+import { CrisisResourceCard } from '@/components/crisis/CrisisResourceCard'
 
 interface CrisisAlertProps {
   crisis: CrisisState
@@ -24,7 +25,6 @@ export function CrisisAlert({ crisis, onDismiss }: CrisisAlertProps) {
             : 'border-iris-600/40 bg-iris-600/8',
       ].join(' ')}
     >
-      {/* Header */}
       <div className="flex items-start justify-between gap-2">
         <div className="flex items-center gap-2">
           {(isTier1 || isTier2) && (
@@ -35,7 +35,7 @@ export function CrisisAlert({ crisis, onDismiss }: CrisisAlertProps) {
               ].join(' ')}
               aria-hidden="true"
             >
-              {isTier1 ? '⚠' : '○'}
+              {isTier1 ? '\u26A0' : '\u25CB'}
             </span>
           )}
           <p
@@ -49,14 +49,13 @@ export function CrisisAlert({ crisis, onDismiss }: CrisisAlertProps) {
             ].join(' ')}
           >
             {isTier1
-              ? 'You matter — crisis support available now'
+              ? 'You matter \u2014 crisis support available now'
               : isTier2
                 ? 'Support is here for you'
                 : 'Checking in with you'}
           </p>
         </div>
 
-        {/* Dismiss — only for tier 3 (nudge, not emergency) */}
         {crisis.tier === 3 && (
           <button
             type="button"
@@ -64,12 +63,11 @@ export function CrisisAlert({ crisis, onDismiss }: CrisisAlertProps) {
             className="text-text-muted hover:text-text-secondary transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-iris-500 rounded text-xs px-1"
             aria-label="Dismiss"
           >
-            ✕
+            \u2715
           </button>
         )}
       </div>
 
-      {/* Scripted response — whitespace-pre-line to render the newlines */}
       <p
         className={[
           'font-sans text-sm leading-relaxed whitespace-pre-line',
@@ -83,28 +81,8 @@ export function CrisisAlert({ crisis, onDismiss }: CrisisAlertProps) {
         {crisis.response}
       </p>
 
-      {/* For tier 1/2: explicit action links + non-dismissable */}
       {(isTier1 || isTier2) && (
-        <div className="flex flex-wrap gap-3 mt-1">
-          <a
-            href="tel:988"
-            className={[
-              'font-sans text-sm font-semibold underline underline-offset-2 transition-colors',
-              isTier1 ? 'text-error hover:text-error/80' : 'text-gold-400 hover:text-gold-300',
-            ].join(' ')}
-          >
-            Call 988
-          </a>
-          <a
-            href="sms:741741&body=HOME"
-            className={[
-              'font-sans text-sm font-semibold underline underline-offset-2 transition-colors',
-              isTier1 ? 'text-error hover:text-error/80' : 'text-gold-400 hover:text-gold-300',
-            ].join(' ')}
-          >
-            Text HOME to 741741
-          </a>
-        </div>
+        <CrisisResourceCard variant={isTier1 ? 'urgent' : 'supportive'} />
       )}
     </div>
   )
