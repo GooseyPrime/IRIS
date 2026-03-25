@@ -119,7 +119,7 @@ Follow this ritual for every Cursor session, no matter how small the task:
 
 1. **Open the relevant files first** so the correct `.mdc` rules auto-attach (e.g. open `src/app/api/chat/route.ts` before asking about the chat route).
 2. **Paste the initiating instruction** above with your specific task filled in.
-3. **Use Plan Mode** (`Cmd+Shift+P → "Cursor: Plan"` or the Plan button) to review the agent's approach before it writes code.
+3. **Use Plan Mode** (`Cmd+Shift+P → "Cursor: Plan"` or the Plan button) to review the agent's proposed files + steps before it writes code.
 4. **Approve the plan**, then switch to Execute.
 5. **Run quality gates** immediately after the agent finishes (see [Quality Gates](#quality-gates)).
 6. **Open a new chat** for the next task.
@@ -137,7 +137,7 @@ Use a single **orchestrator** agent to coordinate the overall backlog and spin u
 3. **Pick rule context** — open the exact files that will activate the right `.mdc` rules.
 4. **Spawn a focused session** — paste the [initiating instruction set](#initiating-instruction-set) with the task filled in.
 5. **Plan → Execute** — require Plan Mode, then approve before any code changes.
-6. **Verify & record** — run [Quality Gates](#quality-gates), capture results, update the task checklist.
+6. **Verify & record** — run [Quality Gates](#quality-gates), capture results, update the task checklist in your issue tracker or PR description.
 7. **Stop when blocked** — if a boundary is hit, pause and request explicit approval.
 
 > The orchestrator may manage many tasks, but **each task still runs in its own Cursor session**.
