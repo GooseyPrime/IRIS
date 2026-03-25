@@ -44,10 +44,9 @@ export default async function DashboardPage() {
       {/* Placeholder cards — future sessions will fill these */}
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <PlaceholderCard
-          title="Daily Check-in"
-          description="How are you feeling today?"
-          href="/check-in"
-          comingSoon
+          title="Evening Reflection"
+          description="How was your day? Check in with IRIS."
+          href="/reflection"
         />
         <PlaceholderCard
           title="Talk to IRIS"
