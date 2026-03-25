@@ -81,7 +81,7 @@ export function ForgotPasswordForm() {
           </h2>
           <p className="font-sans text-sm text-text-secondary">
             If an account exists for{' '}
-            <span className="text-iris-400">{email}</span>, you'll receive a
+            <span className="text-iris-400">{email}</span>, you&apos;ll receive a
             password reset link shortly.
           </p>
         </div>
@@ -117,7 +117,7 @@ export function ForgotPasswordForm() {
           Reset your password
         </h1>
         <p className="font-sans text-sm text-text-secondary text-center mb-6">
-          Enter your email and we'll send you a reset link.
+          Enter your email and we&apos;ll send you a reset link.
         </p>
 
         <form onSubmit={(e) => void handleSubmit(e)} className="flex flex-col gap-4">

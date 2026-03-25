@@ -73,7 +73,7 @@ export function ResetPasswordForm() {
           Choose a new password
         </h1>
         <p className="font-sans text-sm text-text-secondary text-center mb-6">
-          Make it strong — you won't need to remember it if you sign in with Google.
+          Make it strong — you won&apos;t need to remember it if you sign in with Google.
         </p>
 
         <form onSubmit={(e) => void handleSubmit(e)} className="flex flex-col gap-4">
