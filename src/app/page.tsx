@@ -11,7 +11,7 @@ export default function HomePage() {
           Your Journey Begins
         </p>
 
-        <h1 className="font-serif font-light text-[clamp(3rem,10vw,8rem)] leading-[0.9] tracking-[-0.03em] text-text-primary">
+        <h1 className="font-serif font-light text-[clamp(3rem,10vw,8rem)] leading-[0.9] tracking-[-0.03em] text-text-primary whitespace-nowrap">
           I Rise,{' '}
           <span className="bg-sacred-iris bg-clip-text text-transparent">
             I Shine
