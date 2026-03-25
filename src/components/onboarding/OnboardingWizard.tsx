@@ -123,16 +123,16 @@ export function OnboardingWizard() {
     <div className="flex flex-col gap-8">
       {/* IRIS wordmark */}
       <div className="text-center">
-        <p className="font-serif font-light text-4xl tracking-tight text-text-primary">
+        <p className="font-serif font-light text-4xl tracking-tight text-zinc-100">
           IRIS
         </p>
-        <p className="font-sans text-xs text-text-muted mt-1 uppercase tracking-[0.2em]">
+        <p className="font-sans text-xs text-zinc-400 mt-1 uppercase tracking-[0.2em]">
           I Rise, I Shine
         </p>
       </div>
 
       {/* Card */}
-      <div className="bg-surface-1 rounded-3xl border border-iris-900/30 p-8 shadow-[0_8px_40px_rgba(107,76,230,0.08)]">
+      <div className="bg-black/40 backdrop-blur-xl border border-white/10 rounded-3xl shadow-2xl p-8">
         {/* Progress */}
         <WizardProgress
           currentStep={step}
@@ -179,7 +179,7 @@ export function OnboardingWizard() {
         </div>
 
         {/* Navigation */}
-        <div className="flex items-center justify-between mt-8 pt-6 border-t border-iris-900/20">
+        <div className="flex items-center justify-between mt-8 pt-6 border-t border-white/10">
           <Button
             variant="ghost"
             size="md"
@@ -221,7 +221,7 @@ export function OnboardingWizard() {
       </div>
 
       {/* Already have an account */}
-      <p className="font-sans text-center text-sm text-text-muted">
+      <p className="font-sans text-center text-sm text-zinc-400">
         Already have an account?{' '}
         <a
           href="/login"

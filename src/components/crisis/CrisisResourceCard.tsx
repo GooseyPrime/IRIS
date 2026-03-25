@@ -43,28 +43,28 @@ interface CrisisResourceCardProps {
 export function CrisisResourceCard({ variant = 'urgent' }: CrisisResourceCardProps) {
   const borderColor =
     variant === 'urgent'
-      ? 'border-error/40'
+      ? 'border-red-900/50'
       : variant === 'supportive'
-        ? 'border-gold-500/40'
-        : 'border-iris-600/30'
+        ? 'border-gold-500/30'
+        : 'border-white/10'
 
   const bgColor =
     variant === 'urgent'
-      ? 'bg-error/5'
+      ? 'bg-black/50'
       : variant === 'supportive'
-        ? 'bg-gold-500/5'
-        : 'bg-surface-1'
+        ? 'bg-black/40'
+        : 'bg-black/40'
 
   const headingColor =
     variant === 'urgent'
       ? 'text-error'
       : variant === 'supportive'
         ? 'text-gold-400'
-        : 'text-text-primary'
+        : 'text-zinc-100'
 
   return (
     <div
-      className={`rounded-2xl border ${borderColor} ${bgColor} p-4`}
+      className={`rounded-3xl backdrop-blur-xl shadow-2xl border ${borderColor} ${bgColor} p-4`}
       role="region"
       aria-label="Crisis resources"
     >
@@ -77,16 +77,16 @@ export function CrisisResourceCard({ variant = 'urgent' }: CrisisResourceCardPro
           <a
             key={resource.name}
             href={resource.href}
-            className="flex items-center gap-3 px-3 py-2.5 rounded-xl border border-iris-900/20 bg-surface-0/50 hover:bg-surface-2 transition-all duration-200 group focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-iris-500 focus-visible:ring-offset-2 focus-visible:ring-offset-surface-0"
+            className="flex items-center gap-3 px-3 py-2.5 rounded-xl border border-white/10 bg-white/5 hover:bg-white/10 transition-all duration-200 group focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-iris-500 focus-visible:ring-offset-2 focus-visible:ring-offset-black"
           >
             <span className="text-lg flex-shrink-0" aria-hidden="true">
               {resource.icon}
             </span>
             <div className="flex-1 min-w-0">
-              <p className="font-sans text-sm font-medium text-text-primary truncate">
+              <p className="font-sans text-sm font-medium text-zinc-100 truncate">
                 {resource.name}
               </p>
-              <p className="font-sans text-xs text-text-muted truncate">
+              <p className="font-sans text-xs text-zinc-400 truncate">
                 {resource.description}
               </p>
             </div>
@@ -106,7 +106,7 @@ export function CrisisResourceCard({ variant = 'urgent' }: CrisisResourceCardPro
         ))}
       </div>
 
-      <p className="font-sans text-[0.6rem] text-text-muted mt-3 text-center">
+      <p className="font-sans text-[0.6rem] text-zinc-400 mt-3 text-center">
         All lines are free, confidential, and available 24/7.
       </p>
     </div>
