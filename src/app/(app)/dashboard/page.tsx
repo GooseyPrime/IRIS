@@ -53,7 +53,6 @@ export default async function DashboardPage() {
           title="Talk to IRIS"
           description="Your AI companion is here."
           href="/chat"
-          comingSoon
         />
       </div>
     </DashboardShell>
