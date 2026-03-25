@@ -41,7 +41,7 @@ export default async function DashboardPage() {
         />
       </section>
 
-      {/* Placeholder cards — future sessions will fill these */}
+      {/* Quick actions */}
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <PlaceholderCard
           title="Evening Reflection"
@@ -52,6 +52,15 @@ export default async function DashboardPage() {
           title="Talk to IRIS"
           description="Your AI companion is here."
           href="/chat"
+        />
+      </div>
+
+      {/* Past sessions link */}
+      <div className="mt-4">
+        <PlaceholderCard
+          title="Past Sessions"
+          description="Browse your conversation history."
+          href="/history"
         />
       </div>
     </DashboardShell>
