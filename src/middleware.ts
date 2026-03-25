@@ -43,6 +43,10 @@ export async function middleware(request: NextRequest) {
   const isPublicRoute =
     pathname === '/' ||
     pathname.startsWith('/login') ||
+    pathname.startsWith('/signup') ||
+    pathname.startsWith('/forgot-password') ||
+    pathname.startsWith('/reset-password') ||
+    pathname.startsWith('/auth/callback') ||
     pathname.startsWith('/onboarding') ||
     pathname.startsWith('/api/webhooks')
 

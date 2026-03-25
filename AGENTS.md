@@ -22,12 +22,18 @@ Cross-tool agent instructions for GitHub Copilot, Claude Code, Cursor, and other
 ```
 src/
 ├── app/                  # Next.js App Router pages and API routes
-│   ├── (auth)/           # Login, onboarding (unauthenticated layout)
+│   ├── (auth)/           # Unauthenticated pages (login, signup, onboarding,
+│   │                     #   forgot-password, reset-password)
 │   ├── (app)/            # Authenticated app shell
+│   ├── auth/
+│   │   └── callback/     # OAuth + email-link callback handler
 │   └── api/
 │       ├── chat/         # Streaming AI route
 │       └── webhooks/     # Stripe webhook handlers
-├── components/           # Shared UI components
+├── components/
+│   ├── auth/             # LoginForm, SignUpForm, ForgotPasswordForm,
+│   │                     #   ResetPasswordForm, GoogleAuthButton, PasswordInput
+│   └── ui/               # Shared primitives (Button, etc.)
 ├── hooks/                # Client-side React hooks
 ├── lib/
 │   ├── supabase/
@@ -60,11 +66,29 @@ pnpm test             # Run test suite
 ## Architecture Decisions
 
 ### Authentication Flow
-- Users start as anonymous (`supabase.auth.signInAnonymously()`)
+
+IRIS supports three sign-in methods. **Google OAuth is the primary recommended path** for new users.
+
+| Method | Route | Notes |
+|--------|-------|-------|
+| Google OAuth | `/login`, `/signup` | Preferred — zero password friction, supported for both sign-up and returning sign-in |
+| Email + Password | `/login`, `/signup` | Acceptable alternative; all password fields have show/hide toggle |
+| Anonymous (explore) | `/onboarding` | Users can explore before committing; data is preserved on account conversion |
+
+**Auth routes:**
+- `/login` — sign in (email/password or Google)
+- `/signup` — create account (email/password or Google)
+- `/forgot-password` — request password reset email
+- `/reset-password` — set new password (after clicking reset link)
+- `/auth/callback` — unified OAuth code-exchange + email-link callback handler
+
+**Session lifecycle:**
+- New users may start anonymous (`supabase.auth.signInAnonymously()`) from the onboarding wizard
 - Anonymous users have `is_anonymous: true` in their JWT
 - All data is keyed to `user_id = auth.uid()` — preserved when they convert to a permanent account
-- Conversion: `updateUser({ email })` → verify email → `updateUser({ password })`
-- The user ID **never changes** through this flow — zero data loss
+- **Google conversion:** `supabase.auth.linkIdentity({ provider: 'google' })` (requires "Allow Manual Linking" in Supabase Dashboard)
+- **Email conversion:** `updateUser({ email })` → verify email → `updateUser({ password })`
+- The user ID **never changes** through any conversion path — zero data loss
 
 ### AI Chat
 - Streaming via `streamText` + `toUIMessageStreamResponse` (AI SDK v6)
@@ -110,6 +134,8 @@ OPENAI_API_KEY=
 STRIPE_SECRET_KEY=
 STRIPE_WEBHOOK_SECRET=
 ```
+
+> Google OAuth does **not** require any additional env vars — credentials are stored inside the Supabase project dashboard, not in `.env.local`.
 
 ---
 

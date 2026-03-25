@@ -1,6 +1,6 @@
 # IRIS — I Rise, I Shine
 
-> An AI-powered sobriety companion. Built with Next.js 15, Supabase anonymous auth, Vercel AI SDK v6, GPT-4o, and a premium dark-mode aesthetic in iris purples and sacred golds.
+> An AI-powered sobriety companion. Built with Next.js 15, Supabase anonymous auth, Google OAuth, Vercel AI SDK v6, GPT-4o, and a premium dark-mode aesthetic in iris purples and sacred golds.
 
 ---
 
@@ -269,6 +269,55 @@ STRIPE_WEBHOOK_SECRET=
 ```
 
 > `SUPABASE_SERVICE_ROLE_KEY` must **never** be imported in any file that runs client-side. The Cursor agent rules enforce this, but double-check on every PR.
+
+---
+
+## Authentication & Onboarding
+
+### Sign-in methods
+
+IRIS supports three ways for users to authenticate:
+
+| Method | Supported | Notes |
+|--------|-----------|-------|
+| **Google OAuth** | ✅ Required | Primary recommended method — zero friction, no password needed |
+| **Email + Password** | ✅ Supported | Show/hide password toggle on all password fields |
+| **Anonymous (explore)** | ✅ Supported | Users can explore the app before committing; data is preserved on account creation |
+
+### Auth pages
+
+| Route | Purpose |
+|-------|---------|
+| `/login` | Sign in with email/password or Google |
+| `/signup` | Create account with email/password or Google |
+| `/forgot-password` | Request a password reset email |
+| `/reset-password` | Set a new password (after clicking reset email link) |
+| `/auth/callback` | OAuth + email link callback handler |
+| `/onboarding` | 5-step preference wizard (accessible before account creation) |
+
+### Onboarding flow
+
+Users can follow two paths:
+
+1. **Account-first** — `/signup` → create account (email or Google) → `/onboarding` wizard → `/dashboard`
+2. **Explore-first** — `/onboarding` wizard (anonymous session) → prompted to create account at completion
+
+Anonymous users are assigned a Supabase `user_id` on first visit. That same ID is preserved when they convert to a permanent account — **zero data loss**.
+
+### Google OAuth setup (Supabase Dashboard)
+
+1. In the Supabase Dashboard go to **Authentication → Providers → Google**.
+2. Enable Google and paste your **Client ID** and **Client Secret** from the [Google Cloud Console](https://console.cloud.google.com/).
+3. Add `https://<your-project>.supabase.co/auth/v1/callback` as an authorized redirect URI in Google Cloud.
+4. To allow anonymous → Google account linking, enable **Allow Manual Linking** under **Authentication → Settings**.
+
+### Password reset flow
+
+1. User visits `/forgot-password` and submits their email.
+2. Supabase sends a password reset email with a link that includes a `code` param.
+3. The link targets `/auth/callback?next=/reset-password`.
+4. The callback route exchanges the code for a session and redirects to `/reset-password`.
+5. User sets a new password via the `ResetPasswordForm` (calls `supabase.auth.updateUser({ password })`).
 
 ---
 
