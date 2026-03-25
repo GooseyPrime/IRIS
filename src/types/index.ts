@@ -89,6 +89,60 @@ export const ChatRequestSchema = z.object({
 export type ChatRequest = z.infer<typeof ChatRequestSchema>
 
 // ---------------------------------------------------------------------------
+// Evening reflection
+// ---------------------------------------------------------------------------
+
+export const ACTIVITY_OPTIONS = [
+  'Exercise',
+  'Meeting / group',
+  'Meditation',
+  'Journaling',
+  'Time with family',
+  'Time with friends',
+  'Creative hobby',
+  'Reading',
+  'Nature / outdoors',
+  'Volunteering',
+  'Work / school',
+  'Rest / self-care',
+] as const
+
+export type ActivityOption = (typeof ACTIVITY_OPTIONS)[number]
+
+export const MOOD_LABELS = {
+  1: 'Struggling',
+  2: 'Difficult',
+  3: 'Okay',
+  4: 'Good',
+  5: 'Great',
+} as const satisfies Record<number, string>
+
+export const EveningReflectionSchema = z.object({
+  soberToday: z.boolean(),
+  mood: z.number().int().min(1).max(5),
+  activities: z.array(z.string().min(1)).max(12),
+  journal: z.string().max(1000).optional(),
+})
+
+export type EveningReflection = z.infer<typeof EveningReflectionSchema>
+
+export const ReflectionSummaryRequestSchema = z.object({
+  soberToday: z.boolean(),
+  mood: z.number().int().min(1).max(5),
+  activities: z.array(z.string()),
+  journal: z.string().max(1000).optional(),
+  userContext: z
+    .object({
+      name: z.string(),
+      daysSober: z.number().int().min(0),
+      tone: z.string(),
+    })
+    .optional(),
+})
+
+export type ReflectionSummaryRequest = z.infer<typeof ReflectionSummaryRequestSchema>
+
+// ---------------------------------------------------------------------------
 // Assessments
 // ---------------------------------------------------------------------------
 
