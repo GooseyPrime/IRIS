@@ -1,0 +1,75 @@
+@import "tailwindcss";
+
+@theme {
+  /* Surfaces */
+  --color-surface-0: #0A0A0F;
+  --color-surface-1: #121218;
+  --color-surface-2: #1A1A24;
+
+  /* Iris purple scale */
+  --color-iris-50: #F0ECFF;
+  --color-iris-100: #DDD6FF;
+  --color-iris-200: #C2B3FF;
+  --color-iris-300: #A48EFF;
+  --color-iris-400: #8A6FF8;
+  --color-iris-500: #6B4CE6;
+  --color-iris-600: #5A3FD3;
+  --color-iris-700: #4A32B8;
+  --color-iris-800: #3A2690;
+  --color-iris-900: #2A1278;
+
+  /* Gold scale */
+  --color-gold-50: #FFF8E6;
+  --color-gold-100: #FEEFC2;
+  --color-gold-200: #FDE495;
+  --color-gold-300: #FCD468;
+  --color-gold-400: #F5C542;
+  --color-gold-500: #D4A843;
+  --color-gold-600: #B38A2E;
+  --color-gold-700: #8F6D1E;
+  --color-gold-800: #6E5014;
+  --color-gold-900: #5C4710;
+
+  /* Text */
+  --color-text-primary: #F0ECF9;
+  --color-text-secondary: #A8A3B8;
+  --color-text-muted: #6B6780;
+
+  /* Semantic */
+  --color-success: #4ADE80;
+  --color-error: #F87171;
+
+  /* Gradients */
+  --background-image-sacred-iris: linear-gradient(135deg, #5A3FD3, #7B5EF6, #9B85FF);
+  --background-image-iris-to-gold: linear-gradient(135deg, #5A3FD3, #7B5EF6, #D4A843);
+  --background-image-night-bloom: linear-gradient(180deg, #0A0A0F 0%, #1A1030 50%, #0A0A0F 100%);
+
+  /* Typography */
+  --font-serif: 'Cormorant Garamond', Georgia, serif;
+  --font-sans: 'DM Sans', system-ui, sans-serif;
+
+  /* Animations */
+  --animate-fade-up: fadeUp 0.8s ease forwards;
+
+  @keyframes fadeUp {
+    from {
+      opacity: 0;
+      transform: translateY(40px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+}
+
+:root {
+  --background: #0A0A0F;
+  --foreground: #F0ECF9;
+}
+
+body {
+  background: var(--background);
+  color: var(--foreground);
+  font-family: var(--font-sans);
+}
