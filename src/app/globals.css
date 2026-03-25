@@ -64,12 +64,15 @@
 }
 
 :root {
-  --background: #0A0A0F;
-  --foreground: #F0ECF9;
+  --background: #000000;
+  --foreground: #f4f4f5;
 }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
+  background-color: #000000;
+  background-image: radial-gradient(circle at top, #18181b, #000000);
+  background-attachment: fixed;
+  color: #f4f4f5;
   font-family: var(--font-sans);
+  min-height: 100vh;
 }
