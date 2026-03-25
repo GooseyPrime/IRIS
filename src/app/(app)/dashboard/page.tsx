@@ -55,12 +55,17 @@ export default async function DashboardPage() {
         />
       </div>
 
-      {/* Past sessions link */}
-      <div className="mt-4">
+      {/* Secondary actions */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-4">
         <PlaceholderCard
           title="Past Sessions"
           description="Browse your conversation history."
           href="/history"
+        />
+        <PlaceholderCard
+          title="Reminders"
+          description="Set morning and evening check-in reminders."
+          href="/reminders"
         />
       </div>
     </DashboardShell>
