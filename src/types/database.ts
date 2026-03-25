@@ -22,10 +22,12 @@ export interface Database {
           updated_at: string
           sobriety_date: string | null
           display_name: string | null
+          substances: string[]
           goals: string[]
           tone_preference: string
           triggers: string[]
           account_tier: 'free' | 'premium' | 'sponsor'
+          onboarding_completed: boolean
         }
         Insert: {
           id: string
@@ -33,10 +35,12 @@ export interface Database {
           updated_at?: string
           sobriety_date?: string | null
           display_name?: string | null
+          substances?: string[]
           goals?: string[]
           tone_preference?: string
           triggers?: string[]
           account_tier?: 'free' | 'premium' | 'sponsor'
+          onboarding_completed?: boolean
         }
         Update: {
           id?: string
@@ -44,11 +48,14 @@ export interface Database {
           updated_at?: string
           sobriety_date?: string | null
           display_name?: string | null
+          substances?: string[]
           goals?: string[]
           tone_preference?: string
           triggers?: string[]
           account_tier?: 'free' | 'premium' | 'sponsor'
+          onboarding_completed?: boolean
         }
+        Relationships: []
       }
       sessions: {
         Row: {
@@ -75,6 +82,7 @@ export interface Database {
           title?: string | null
           ended_at?: string | null
         }
+        Relationships: []
       }
       messages: {
         Row: {
@@ -107,6 +115,7 @@ export interface Database {
           flagged_crisis?: boolean
           crisis_tier?: number | null
         }
+        Relationships: []
       }
       check_ins: {
         Row: {
@@ -136,6 +145,7 @@ export interface Database {
           note?: string | null
           sober_today?: boolean
         }
+        Relationships: []
       }
       assessments: {
         Row: {
@@ -162,6 +172,7 @@ export interface Database {
           responses?: Json
           score?: number | null
         }
+        Relationships: []
       }
       crisis_events: {
         Row: {
@@ -191,6 +202,7 @@ export interface Database {
           message_text?: string
           resolved?: boolean
         }
+        Relationships: []
       }
       feedback: {
         Row: {
@@ -217,6 +229,7 @@ export interface Database {
           comment?: string | null
           category?: string | null
         }
+        Relationships: []
       }
     }
     Views: Record<string, never>
