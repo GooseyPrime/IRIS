@@ -12,6 +12,8 @@
    - [How the rules system works](#how-the-rules-system-works)
    - [Initiating instruction set](#initiating-instruction-set)
    - [Starting every new session](#starting-every-new-session)
+   - [Orchestrating agent (autonomous task loop)](#orchestrating-agent-autonomous-task-loop)
+   - [Critical checkpoints for the orchestrator](#critical-checkpoints-for-the-orchestrator)
 4. [Development Workflow](#development-workflow)
    - [Phase 1 — Foundations](#phase-1--foundations)
    - [Phase 2 — Core Loop](#phase-2--core-loop)
@@ -123,6 +125,39 @@ Follow this ritual for every Cursor session, no matter how small the task:
 6. **Open a new chat** for the next task.
 
 ---
+
+### Orchestrating agent (autonomous task loop)
+
+Use a single **orchestrator** agent to coordinate the overall backlog and spin up focused Cursor sessions. The orchestrator does not write code directly — it manages the loop and ensures rules are followed.
+
+**Orchestrator loop (repeat for each task):**
+
+1. **Intake & scope** — define the task, acceptance criteria, and the single-owner session scope.
+2. **Load ground truth** — read `AGENTS.md` + `.cursor/rules/agent-workflow.mdc` before planning.
+3. **Pick rule context** — open the exact files that will activate the right `.mdc` rules.
+4. **Spawn a focused session** — paste the [initiating instruction set](#initiating-instruction-set) with the task filled in.
+5. **Plan → Execute** — require Plan Mode, then approve before any code changes.
+6. **Verify & record** — run [Quality Gates](#quality-gates), capture results, update the task checklist.
+7. **Stop when blocked** — if a boundary is hit, pause and request explicit approval.
+
+> The orchestrator may manage many tasks, but **each task still runs in its own Cursor session**.
+
+---
+
+### Critical checkpoints for the orchestrator
+
+Before proceeding at any of these decision points, the orchestrator must consult the referenced guideline and obtain explicit approval if required:
+
+| Checkpoint | Consult | Why it matters |
+|-----------|---------|----------------|
+| Schema/RLS changes | `AGENTS.md` → **Boundaries: Ask Before Doing** | Requires explicit approval before migrations or policy edits |
+| Auth or middleware edits | `AGENTS.md` + `.cursor/rules/supabase.mdc` | Critical path; errors lock users out |
+| New npm dependency | `AGENTS.md` + advisory check | Security review required before adding packages |
+| Environment variable changes | `AGENTS.md` | No `.env` updates without confirmation |
+| Public API contract change | `AGENTS.md` | Avoid breaking clients |
+| Crisis detection or scripts | `AGENTS.md` + `.cursor/rules/vercel-ai.mdc` | Clinical review required |
+| Server auth validation | `.cursor/rules/supabase.mdc` | Must use `getUser()` not `getSession()` |
+| Service role key usage | `AGENTS.md` | Must stay server-only |
 
 ## Development Workflow
 
