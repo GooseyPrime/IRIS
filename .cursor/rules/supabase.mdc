@@ -1,0 +1,168 @@
+---
+description: "Supabase @supabase/ssr patterns — browser client, server client, middleware, RLS"
+globs: ["src/lib/supabase/**", "src/middleware.ts"]
+---
+
+# IRIS — Supabase SSR Patterns
+
+## ⚠️ Critical: Always use `@supabase/ssr`, never `@supabase/auth-helpers-nextjs`
+
+Cursor's training data may suggest the deprecated `createClientComponentClient` pattern.
+**That package is deprecated and must not be used in this project.**
+
+## Browser Client
+```typescript
+// src/lib/supabase/client.ts
+import { createBrowserClient } from '@supabase/ssr'
+import type { Database } from '@/types/database'
+
+export function createClient() {
+  return createBrowserClient<Database>(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+  )
+}
+```
+
+## Server Client
+```typescript
+// src/lib/supabase/server.ts
+import { createServerClient } from '@supabase/ssr'
+import { cookies } from 'next/headers'
+import type { Database } from '@/types/database'
+
+export async function createClient() {
+  const cookieStore = await cookies()
+
+  return createServerClient<Database>(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+    {
+      cookies: {
+        getAll() {
+          return cookieStore.getAll()
+        },
+        setAll(cookiesToSet) {
+          try {
+            cookiesToSet.forEach(({ name, value, options }) =>
+              cookieStore.set(name, value, options),
+            )
+          } catch {
+            // setAll called from Server Component — middleware handles refresh
+          }
+        },
+      },
+    },
+  )
+}
+```
+
+## Middleware (complete implementation)
+```typescript
+// src/middleware.ts
+import { createServerClient } from '@supabase/ssr'
+import { NextResponse, type NextRequest } from 'next/server'
+
+export async function middleware(request: NextRequest) {
+  let supabaseResponse = NextResponse.next({ request })
+
+  const supabase = createServerClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+    {
+      cookies: {
+        getAll() {
+          return request.cookies.getAll()
+        },
+        setAll(cookiesToSet) {
+          cookiesToSet.forEach(({ name, value }) =>
+            request.cookies.set(name, value),
+          )
+          supabaseResponse = NextResponse.next({ request })
+          cookiesToSet.forEach(({ name, value, options }) =>
+            supabaseResponse.cookies.set(name, value, options),
+          )
+        },
+      },
+    },
+  )
+
+  // IMPORTANT: always call getUser() — never getSession() for server-side auth checks
+  const { data: { user } } = await supabase.auth.getUser()
+
+  const isAuthRoute = request.nextUrl.pathname.startsWith('/login') ||
+    request.nextUrl.pathname.startsWith('/onboarding')
+
+  if (!user && !isAuthRoute && request.nextUrl.pathname.startsWith('/(app)')) {
+    const url = request.nextUrl.clone()
+    url.pathname = '/login'
+    return NextResponse.redirect(url)
+  }
+
+  return supabaseResponse
+}
+
+export const config = {
+  matcher: [
+    '/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)',
+  ],
+}
+```
+
+## Anonymous Auth
+```typescript
+// Initialize anonymous session on first visit (client-side)
+const supabase = createClient()
+const { data, error } = await supabase.auth.signInAnonymously()
+// data.user.is_anonymous === true
+// data.user.id is preserved through conversion to permanent account
+```
+
+## Converting Anonymous → Permanent User
+```typescript
+// Step 1: Link email (sends verification email)
+await supabase.auth.updateUser({ email: 'user@example.com' })
+
+// Step 2: After email verification, set password
+await supabase.auth.updateUser({ password: 'securePassword123' })
+// user.is_anonymous flips to false; user.id remains unchanged
+
+// Alternative: OAuth linking (requires "Allow Manual Linking" enabled in Dashboard)
+await supabase.auth.linkIdentity({ provider: 'google' })
+```
+
+## RLS Policy Patterns
+```sql
+-- Wrap auth helpers in (select ...) for query-plan caching (~95% perf gain)
+-- Both anonymous and permanent users access their own data
+CREATE POLICY "Users can view own data"
+  ON public.sessions FOR SELECT TO authenticated
+  USING ((select auth.uid()) = user_id);
+
+-- Feature-gate: only permanent users get full history
+CREATE POLICY "Only permanent users view full history"
+  ON public.assessments AS RESTRICTIVE FOR SELECT TO authenticated
+  USING (
+    (select (auth.jwt()->>'is_anonymous')::boolean) IS FALSE
+    OR created_at > (now() - interval '24 hours')
+  );
+
+-- Premium tier gating
+CREATE POLICY "Premium users can export"
+  ON public.data_exports FOR INSERT TO authenticated
+  WITH CHECK (
+    (select auth.uid()) = user_id
+    AND (select (auth.jwt()->>'is_anonymous')::boolean) IS FALSE
+    AND (
+      SELECT account_tier FROM public.user_profiles
+      WHERE id = (select auth.uid())
+    ) IN ('premium', 'sponsor')
+  );
+```
+
+## Security Rules
+- Always use `supabase.auth.getUser()` — never `getSession()` for server-side auth checks.
+- Never expose `SUPABASE_SERVICE_ROLE_KEY` to the client; use it only in server-only code.
+- Never bypass RLS — all tables must have RLS enabled with explicit policies.
+- Use `SECURITY DEFINER` with `SET search_path = ''` on all trigger functions.
+- Use `AS RESTRICTIVE` for anonymous-user guards so they combine with AND, not OR.

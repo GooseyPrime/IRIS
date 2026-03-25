@@ -1,0 +1,116 @@
+---
+description: "TypeScript strict mode enforcement — no any, Zod validation, type utilities"
+alwaysApply: true
+---
+
+# IRIS — TypeScript Strict Mode
+
+## tsconfig Requirements
+```json
+{
+  "compilerOptions": {
+    "strict": true,
+    "noUncheckedIndexedAccess": true,
+    "exactOptionalPropertyTypes": true,
+    "noImplicitReturns": true,
+    "noFallthroughCasesInSwitch": true
+  }
+}
+```
+
+## No `any` — Ever
+```typescript
+// ❌ Never
+function process(data: any) { ... }
+const result = value as any
+
+// ✅ Use unknown + narrowing
+function process(data: unknown) {
+  if (typeof data === 'string') { ... }
+}
+
+// ✅ Use Zod for runtime parsing
+const parsed = MySchema.parse(data)
+```
+
+## Zod Schemas at All Boundaries
+Every API route, Server Action, and external data source must be validated with Zod:
+```typescript
+import { z } from 'zod'
+
+export const CheckInSchema = z.object({
+  mood: z.number().int().min(1).max(5),
+  emotions: z.array(z.string()).max(10),
+  note: z.string().max(1000).optional(),
+  soberToday: z.boolean(),
+})
+
+export type CheckIn = z.infer<typeof CheckInSchema>
+```
+
+## Discriminated Union Results
+```typescript
+type Result<T> =
+  | { success: true; data: T }
+  | { success: false; error: string }
+
+// Usage
+async function fetchProfile(userId: string): Promise<Result<UserProfile>> {
+  try {
+    const data = await getProfile(userId)
+    return { success: true, data }
+  } catch (err) {
+    return { success: false, error: err instanceof Error ? err.message : 'Unknown error' }
+  }
+}
+```
+
+## Database Types
+Generate and use the Supabase-generated `Database` type:
+```typescript
+import type { Database } from '@/types/database'
+import type { Tables, TablesInsert, TablesUpdate } from '@/types/database'
+
+type UserProfile = Tables<'user_profiles'>
+type NewCheckIn = TablesInsert<'check_ins'>
+type CheckInUpdate = TablesUpdate<'check_ins'>
+```
+
+## Type Guards
+```typescript
+// Use `satisfies` to validate shapes without widening
+const config = {
+  model: 'gpt-4o',
+  temperature: 0.7,
+} satisfies ChatConfig
+
+// Prefer type predicates over casting
+function isApiError(value: unknown): value is ApiError {
+  return (
+    typeof value === 'object' &&
+    value !== null &&
+    'error' in value &&
+    typeof (value as Record<string, unknown>).error === 'string'
+  )
+}
+```
+
+## Enums → Const Objects
+```typescript
+// ❌ Avoid TypeScript enums (they emit runtime code)
+enum Mood { Low = 1, Medium = 3, High = 5 }
+
+// ✅ Use const objects with `as const`
+export const MOOD = {
+  LOW: 1,
+  MEDIUM: 3,
+  HIGH: 5,
+} as const
+export type Mood = (typeof MOOD)[keyof typeof MOOD]
+```
+
+## Run After Every Change
+```bash
+pnpm typecheck
+```
+TypeScript errors must be zero before committing.

@@ -1,0 +1,47 @@
+---
+description: "Core project conventions — tech stack and code style"
+alwaysApply: true
+---
+
+# IRIS — Base Stack Conventions
+
+## Tech Stack
+- **Framework**: Next.js 15 App Router (no Pages Router)
+- **Language**: TypeScript 5 — strict mode, no `any`
+- **Database / Auth**: Supabase (`@supabase/ssr`) — no `@supabase/auth-helpers-nextjs`
+- **AI**: Vercel AI SDK v6 (`ai@6`, `@ai-sdk/react`, `@ai-sdk/openai`)
+- **Styling**: Tailwind CSS v4 + CSS custom properties
+- **Validation**: Zod for all external inputs and API boundaries
+- **Package Manager**: pnpm
+
+## Non-Negotiables
+- TypeScript strict mode — `"strict": true` in tsconfig. Never use `any`; use `unknown` and narrow.
+- Named exports only — no default exports except for Next.js page/layout conventions.
+- Path aliases — always use `@/` for `src/`. Never use relative `../../` imports.
+- Functional components — no class components.
+- Server Components by default — add `'use client'` only when necessary.
+- Zod schemas for every API route request body and all user-supplied data.
+- `@supabase/ssr` exclusively — never `@supabase/auth-helpers-nextjs`.
+- No Prisma, no Drizzle — use Supabase client directly.
+- No Pages Router — all routes live under `src/app/`.
+
+## File & Export Conventions
+```typescript
+// ✅ Correct
+export function MyComponent() { ... }
+export const myHelper = () => { ... }
+
+// ❌ Wrong
+export default function MyComponent() { ... }  // (except page.tsx / layout.tsx)
+```
+
+## Import Order
+1. React / Next.js built-ins
+2. Third-party libraries
+3. Internal `@/` aliases (types → lib → hooks → components)
+4. Relative imports (avoid)
+
+## Error Handling
+- All async Server Actions and route handlers must `try/catch` and return typed error shapes.
+- Never swallow errors silently — log with context.
+- Use discriminated union result types: `{ success: true; data: T } | { success: false; error: string }`.
