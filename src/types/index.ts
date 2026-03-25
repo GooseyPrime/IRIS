@@ -133,3 +133,56 @@ export const FeedbackSchema = z.object({
 })
 
 export type Feedback = z.infer<typeof FeedbackSchema>
+
+// ---------------------------------------------------------------------------
+// Onboarding
+// ---------------------------------------------------------------------------
+
+export const SUBSTANCE_OPTIONS = [
+  'alcohol',
+  'cannabis',
+  'opioids',
+  'stimulants',
+  'benzodiazepines',
+  'tobacco',
+  'other',
+] as const
+
+export type SubstanceOption = (typeof SUBSTANCE_OPTIONS)[number]
+
+export const SubstanceSchema = z.array(
+  z.enum(SUBSTANCE_OPTIONS),
+).min(1, 'Please select at least one substance')
+
+export const GOAL_OPTIONS = [
+  'Stay sober one day at a time',
+  'Rebuild relationships',
+  'Improve mental health',
+  'Regain physical health',
+  'Find community and support',
+  'Manage cravings',
+  'Return to work or school',
+] as const
+
+export const TRIGGER_OPTIONS = [
+  'Stress',
+  'Loneliness',
+  'Social events',
+  'Anxiety',
+  'Boredom',
+  'Relationship conflict',
+  'Work pressure',
+  'Grief or loss',
+  'Celebration',
+] as const
+
+export const OnboardingDataSchema = z.object({
+  substances: SubstanceSchema,
+  sobrietyDate: z.string().date().optional(),
+  sobrietyDateUnknown: z.boolean(),
+  goals: z.array(z.string().min(1)).min(1, 'Please select at least one goal').max(20),
+  triggers: z.array(z.string().min(1)).max(50),
+  tonePreference: TonePreferenceSchema,
+})
+
+export type OnboardingData = z.infer<typeof OnboardingDataSchema>
