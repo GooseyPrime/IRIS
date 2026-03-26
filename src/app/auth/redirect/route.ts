@@ -27,9 +27,27 @@ export async function GET(request: Request) {
     .eq('id', user.id)
     .single()
 
-  if (!profile || !profile.onboarding_completed) {
-    return NextResponse.redirect(`${origin}/onboarding`)
+  if (profile?.onboarding_completed) {
+    return NextResponse.redirect(`${origin}/dashboard`)
   }
 
-  return NextResponse.redirect(`${origin}/dashboard`)
+  // Non-anonymous users (real email/OAuth accounts) already have an account.
+  // Create a default profile, mark onboarding complete, and go to settings.
+  const isAnonymous = user.is_anonymous === true
+  if (!isAnonymous) {
+    await supabase.from('user_profiles').upsert({
+      id: user.id,
+      substances: ['other'],
+      sobriety_date: null,
+      goals: ['Stay sober one day at a time'],
+      triggers: [],
+      tone_preference: 'warm',
+      onboarding_completed: true,
+      updated_at: new Date().toISOString(),
+    })
+    return NextResponse.redirect(`${origin}/settings`)
+  }
+
+  // Anonymous users without completed onboarding → start the interview
+  return NextResponse.redirect(`${origin}/onboarding`)
 }

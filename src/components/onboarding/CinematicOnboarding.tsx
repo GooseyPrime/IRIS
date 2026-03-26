@@ -106,6 +106,8 @@ export function CinematicOnboarding() {
   const [serverError, setServerError] = useState<string | null>(null)
   const initDone = useRef(false)
 
+  const [skipping, setSkipping] = useState(false)
+
   const [extractedData, setExtractedData] = useState<ExtractedData>({
     substances: [],
     sobrietyDate: '',
@@ -429,6 +431,23 @@ export function CinematicOnboarding() {
           </button>
           {' — '}set up your profile manually later
         </p>
+        <button
+          type="button"
+          disabled={skipping || !authInitialised}
+          onClick={async () => {
+            setSkipping(true)
+            const result = await skipOnboarding()
+            // skipOnboarding redirects on success — only reach here on error
+            if (!result.success) {
+              setServerError(result.error)
+              setPhase('error')
+              setSkipping(false)
+            }
+          }}
+          className="font-sans text-xs text-text-muted hover:text-iris-300 underline underline-offset-2 transition-colors disabled:opacity-50"
+        >
+          {skipping ? 'Skipping…' : 'Skip interview — set up profile manually'}
+        </button>
       </div>
     </div>
   )

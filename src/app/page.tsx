@@ -37,18 +37,17 @@ export default function HomePage() {
             <VineAnimationWrapper />
           </div>
 
-          <div className="relative z-10 bg-black/40 backdrop-blur-xl border border-white/10 rounded-3xl shadow-2xl px-8 py-14 sm:px-14 max-w-2xl w-full">
-            <div className="flex flex-col items-center gap-8 text-center animate-fade-up">
+          <div className="relative z-10 bg-black/40 backdrop-blur-xl border border-white/10 rounded-3xl shadow-2xl px-10 py-20 sm:px-20 max-w-4xl w-full">
+            <div className="flex flex-col items-center gap-10 text-center animate-fade-up">
               <p className="text-[0.75rem] uppercase tracking-[0.2em] text-gold-500">
                 Your Journey Begins
               </p>
 
-              <h1 className="font-serif font-light text-[clamp(3rem,10vw,8rem)] leading-[0.9] tracking-[-0.03em] text-zinc-100 whitespace-nowrap">
-                I Rise,{' '}
-                <span className="bg-sacred-iris bg-clip-text text-transparent">
-                  I Shine
-                </span>
-              </h1>
+              <img
+                src="https://res.cloudinary.com/dksj2niho/image/upload/v1774559634/IRIS_xvtyev.jpg"
+                alt="IRIS — I Rise, I Shine"
+                className="w-full max-w-xl"
+              />
 
               <p className="font-sans text-lg leading-[1.7] text-zinc-400 max-w-md">
                 A compassionate AI companion for your sobriety journey.
