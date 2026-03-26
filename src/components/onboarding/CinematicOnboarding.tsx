@@ -1,6 +1,7 @@
 'use client'
 
 import { useCallback, useEffect, useRef, useState } from 'react'
+import { createClient } from '@/lib/supabase/client'
 import { completeOnboarding, skipOnboarding } from '@/app/(auth)/onboarding/_actions'
 import type { SubstanceOption, TonePreference } from '@/types'
 import { SUBSTANCE_OPTIONS, TRIGGER_OPTIONS, GOAL_OPTIONS } from '@/types'
@@ -104,7 +105,8 @@ export function CinematicOnboarding() {
   const [history, setHistory] = useState<HistoryEntry[]>([])
   const [phase, setPhase] = useState<'loading' | 'question' | 'transitioning' | 'saving' | 'skipping' | 'error'>('loading')
   const [serverError, setServerError] = useState<string | null>(null)
-  const initDone = useRef(false)
+  const [authInitialised, setAuthInitialised] = useState(false)
+  const authAttempted = useRef(false)
 
   const [skipping, setSkipping] = useState(false)
 
@@ -117,13 +119,34 @@ export function CinematicOnboarding() {
     tonePreference: 'warm',
   })
 
-  // User is already authenticated (server-side check in page.tsx ensures this).
-  // Fetch first question on mount.
+  // Anonymous auth on mount
   useEffect(() => {
-    if (initDone.current) return
-    initDone.current = true
-    void fetchNextQuestion([], 0)
+    if (authAttempted.current) return
+    authAttempted.current = true
+
+    async function initAuth() {
+      const supabase = createClient()
+      const {
+        data: { user },
+      } = await supabase.auth.getUser()
+
+      if (!user) {
+        const { error } = await supabase.auth.signInAnonymously()
+        if (error) {
+          console.error('[CinematicOnboarding] anonymous auth error:', error)
+        }
+      }
+      setAuthInitialised(true)
+    }
+
+    void initAuth()
   }, [])
+
+  // Fetch first question after auth
+  useEffect(() => {
+    if (!authInitialised) return
+    void fetchNextQuestion([], 0)
+  }, [authInitialised])
 
   async function fetchNextQuestion(currentHistory: HistoryEntry[], index: number) {
     setPhase('loading')
@@ -431,23 +454,15 @@ export function CinematicOnboarding() {
           </button>
           {' — '}set up your profile manually later
         </p>
-        <button
-          type="button"
-          disabled={skipping || !authInitialised}
-          onClick={async () => {
-            setSkipping(true)
-            const result = await skipOnboarding()
-            // skipOnboarding redirects on success — only reach here on error
-            if (!result.success) {
-              setServerError(result.error)
-              setPhase('error')
-              setSkipping(false)
-            }
-          }}
-          className="font-sans text-xs text-text-muted hover:text-iris-300 underline underline-offset-2 transition-colors disabled:opacity-50"
-        >
-          {skipping ? 'Skipping…' : 'Skip interview — set up profile manually'}
-        </button>
+        <p className="font-sans text-xs text-text-muted">
+          Already have an account?{' '}
+          <a
+            href="/login"
+            className="text-iris-400 hover:text-iris-300 underline underline-offset-2 transition-colors"
+          >
+            Sign in
+          </a>
+        </p>
       </div>
     </div>
   )

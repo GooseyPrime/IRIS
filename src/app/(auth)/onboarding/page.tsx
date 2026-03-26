@@ -14,21 +14,31 @@ export default async function OnboardingPage() {
     data: { user },
   } = await supabase.auth.getUser()
 
-  // Must be authenticated (real account, not anonymous) to do onboarding
-  if (!user || user.is_anonymous) {
-    redirect('/signup')
+  if (user) {
+    const { data: profile } = await supabase
+      .from('user_profiles')
+      .select('onboarding_completed')
+      .eq('id', user.id)
+      .single()
+
+    // Already completed onboarding → go straight to dashboard
+    if (profile?.onboarding_completed) {
+      redirect('/dashboard')
+    }
+
+    // Non-anonymous users (real email/OAuth accounts) already have an account —
+    // skip the interview and let them fill in their profile from settings.
+    if (!user.is_anonymous) {
+      await supabase.from('user_profiles').upsert({
+        id: user.id,
+        onboarding_completed: true,
+        updated_at: new Date().toISOString(),
+      })
+      redirect('/dashboard')
+    }
   }
 
-  // Already completed onboarding — go straight to dashboard
-  const { data: profile } = await supabase
-    .from('user_profiles')
-    .select('onboarding_completed')
-    .eq('id', user.id)
-    .single()
-
-  if (profile?.onboarding_completed) {
-    redirect('/dashboard')
-  }
-
+  // Anonymous or unauthenticated visitors — show the interview.
+  // CinematicOnboarding handles anonymous auth client-side if needed.
   return <CinematicOnboarding />
 }
