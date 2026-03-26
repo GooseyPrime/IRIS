@@ -149,12 +149,12 @@ export function LoginForm() {
           </Link>
         </p>
         <p className="font-sans text-center text-sm text-text-muted">
-          Want to explore first?{' '}
+          Want to support IRIS?{' '}
           <Link
-            href="/onboarding"
+            href="/donate"
             className="text-gold-400 hover:text-gold-300 transition-colors underline underline-offset-2"
           >
-            Begin your journey
+            Make a donation
           </Link>
         </p>
       </div>

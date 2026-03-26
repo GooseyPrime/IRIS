@@ -85,8 +85,9 @@ export async function completeOnboarding(
 }
 
 /**
- * Skip the onboarding interview and create a minimal profile with defaults.
- * Redirects the user to /settings so they can fill in their profile manually.
+ * Skip the onboarding interview — creates a minimal profile with sensible
+ * defaults so the user can go straight to the dashboard and fill in details
+ * later via Settings.
  */
 export async function skipOnboarding(): Promise<Result<{ userId: string }>> {
   const supabase = await createClient()
@@ -105,30 +106,41 @@ export async function skipOnboarding(): Promise<Result<{ userId: string }>> {
     return { success: false, error: 'Not authenticated' }
   }
 
-  // Upsert a minimal profile with defaults — if a profile already exists the
-  // DB will only overwrite the columns we supply, which is safe because a user
-  // who already has real data would have onboarding_completed=true and would
-  // never reach this path (the onboarding page redirects them to /dashboard).
-  const { error: upsertError } = await supabase.from('user_profiles').upsert({
-    id: user.id,
-    substances: ['other'],
-    sobriety_date: null,
-    goals: ['Stay sober one day at a time'],
-    triggers: [],
-    tone_preference: 'warm',
-    onboarding_completed: true,
-    updated_at: new Date().toISOString(),
-  })
+  // Check for existing profile to avoid overwriting real data
+  const { data: existingProfile } = await supabase
+    .from('user_profiles')
+    .select('id')
+    .eq('id', user.id)
+    .maybeSingle()
 
-  if (upsertError) {
-    console.error('[skipOnboarding] upsert error:', {
-      code: upsertError.code,
-      message: upsertError.message,
-      details: upsertError.details,
-      hint: upsertError.hint,
-      userId: user.id,
+  if (existingProfile) {
+    // Profile already exists — just mark onboarding complete
+    const { error: updateError } = await supabase
+      .from('user_profiles')
+      .update({ onboarding_completed: true, updated_at: new Date().toISOString() })
+      .eq('id', user.id)
+
+    if (updateError) {
+      console.error('[skipOnboarding] update error:', updateError)
+      return { success: false, error: 'Failed to save your profile. Please try again.' }
+    }
+  } else {
+    // No profile yet — create with sensible defaults
+    const { error: insertError } = await supabase.from('user_profiles').insert({
+      id: user.id,
+      substances: ['other'],
+      sobriety_date: null,
+      goals: ['Stay sober one day at a time'],
+      triggers: [],
+      tone_preference: 'warm',
+      onboarding_completed: true,
+      updated_at: new Date().toISOString(),
     })
-    return { success: false, error: 'Failed to save your profile. Please try again.' }
+
+    if (insertError) {
+      console.error('[skipOnboarding] insert error:', insertError)
+      return { success: false, error: 'Failed to save your profile. Please try again.' }
+    }
   }
 
   // Check for pending sponsorships by the user's email
@@ -150,10 +162,8 @@ export async function skipOnboarding(): Promise<Result<{ userId: string }>> {
         .from('pending_sponsorships')
         .update({ applied: true, applied_at: new Date().toISOString() })
         .in('id', ids)
-
-      console.log(`[skipOnboarding] Applied ${ids.length} pending sponsorship(s) for ${user.email}`)
     }
   }
 
-  redirect('/settings')
+  redirect('/dashboard')
 }

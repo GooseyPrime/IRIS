@@ -26,23 +26,19 @@ export default async function OnboardingPage() {
       redirect('/dashboard')
     }
 
-    // Non-anonymous users (real email/OAuth accounts) already have an account.
-    // Skip the interview and send them to settings to fill in their profile.
-    const isAnonymous = user.is_anonymous === true
-    if (!isAnonymous) {
+    // Non-anonymous users (real email/OAuth accounts) already have an account —
+    // skip the interview and let them fill in their profile from settings.
+    if (!user.is_anonymous) {
       await supabase.from('user_profiles').upsert({
         id: user.id,
-        substances: ['other'],
-        sobriety_date: null,
-        goals: ['Stay sober one day at a time'],
-        triggers: [],
-        tone_preference: 'warm',
         onboarding_completed: true,
         updated_at: new Date().toISOString(),
       })
-      redirect('/settings')
+      redirect('/dashboard')
     }
   }
 
+  // Anonymous or unauthenticated visitors — show the interview.
+  // CinematicOnboarding handles anonymous auth client-side if needed.
   return <CinematicOnboarding />
 }

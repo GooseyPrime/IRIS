@@ -8,7 +8,7 @@ interface GoogleAuthButtonProps {
   redirectTo?: string
 }
 
-export function GoogleAuthButton({ mode, redirectTo = '/onboarding' }: GoogleAuthButtonProps) {
+export function GoogleAuthButton({ mode, redirectTo = '/auth/redirect' }: GoogleAuthButtonProps) {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
 

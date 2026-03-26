@@ -320,12 +320,26 @@ export function CinematicOnboarding() {
       {phase === 'error' && (
         <div className="flex flex-col items-center gap-4 text-center max-w-md">
           <p className="font-sans text-sm text-error" role="alert">{serverError}</p>
-          <button
-            onClick={() => void fetchNextQuestion(history, questionIndex)}
-            className="px-6 py-3 rounded-xl bg-iris-600 text-white font-sans text-sm font-medium hover:bg-iris-500 transition-colors"
-          >
-            Try again
-          </button>
+          <div className="flex flex-col gap-3">
+            <button
+              onClick={() => void fetchNextQuestion(history, questionIndex)}
+              className="px-6 py-3 rounded-xl bg-iris-600 text-white font-sans text-sm font-medium hover:bg-iris-500 transition-colors"
+            >
+              Try again
+            </button>
+            <button
+              onClick={() => void handleSkip()}
+              className="px-6 py-3 rounded-xl border border-gold-500/40 text-gold-400 font-sans text-sm font-medium hover:bg-gold-500/10 transition-colors"
+            >
+              Skip to dashboard
+            </button>
+            <a
+              href="/dashboard"
+              className="font-sans text-xs text-text-muted hover:text-iris-300 underline underline-offset-2 transition-colors"
+            >
+              Go to dashboard
+            </a>
+          </div>
         </div>
       )}
 
@@ -427,8 +441,19 @@ export function CinematicOnboarding() {
         </div>
       )}
 
-      {/* Sign-in & skip links */}
+      {/* Bottom links: skip + sign-in */}
       <div className="fixed bottom-16 left-1/2 -translate-x-1/2 flex flex-col items-center gap-2">
+        <p className="font-sans text-xs text-text-muted">
+          <button
+            type="button"
+            onClick={() => void handleSkip()}
+            disabled={phase === 'skipping' || phase === 'saving'}
+            className="text-gold-400 hover:text-gold-300 underline underline-offset-2 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            Skip interview
+          </button>
+          {' — '}set up your profile manually later
+        </p>
         <p className="font-sans text-xs text-text-muted">
           Already have an account?{' '}
           <a
@@ -438,23 +463,6 @@ export function CinematicOnboarding() {
             Sign in
           </a>
         </p>
-        <button
-          type="button"
-          disabled={skipping || !authInitialised}
-          onClick={async () => {
-            setSkipping(true)
-            const result = await skipOnboarding()
-            // skipOnboarding redirects on success — only reach here on error
-            if (!result.success) {
-              setServerError(result.error)
-              setPhase('error')
-              setSkipping(false)
-            }
-          }}
-          className="font-sans text-xs text-text-muted hover:text-iris-300 underline underline-offset-2 transition-colors disabled:opacity-50"
-        >
-          {skipping ? 'Skipping…' : 'Skip interview — set up profile manually'}
-        </button>
       </div>
     </div>
   )

@@ -54,12 +54,20 @@ export default function HomePage() {
                 Every day you rise is a day you shine.
               </p>
 
-              <Link
-                href="/onboarding"
-                className="bg-white/10 border border-white/20 text-white font-sans font-medium px-8 py-4 rounded-xl hover:bg-white/20 backdrop-blur-md active:scale-[0.98] transition-all duration-200 focus-visible:ring-2 focus-visible:ring-iris-500 focus-visible:ring-offset-2 focus-visible:ring-offset-black"
-              >
-                Begin Your Journey
-              </Link>
+              <div className="flex flex-col gap-4 sm:flex-row">
+                <Link
+                  href="/signup"
+                  className="bg-white/10 border border-white/20 text-white font-sans font-medium px-8 py-4 rounded-xl hover:bg-white/20 backdrop-blur-md active:scale-[0.98] transition-all duration-200 focus-visible:ring-2 focus-visible:ring-iris-500 focus-visible:ring-offset-2 focus-visible:ring-offset-black"
+                >
+                  Begin Your Journey
+                </Link>
+                <Link
+                  href="/donate"
+                  className="border border-gold-500/40 text-gold-400 font-sans font-medium px-8 py-4 rounded-xl hover:bg-gold-500/10 hover:text-gold-300 backdrop-blur-md transition-all duration-200 focus-visible:ring-2 focus-visible:ring-gold-500 focus-visible:ring-offset-2 focus-visible:ring-offset-black"
+                >
+                  Become a Guiding Light
+                </Link>
+              </div>
             </div>
           </div>
         </section>
@@ -98,11 +106,11 @@ export default function HomePage() {
                 Become a Guiding Light
               </p>
               <h2 className="font-serif font-light text-3xl text-text-primary mb-3">
-                Sponsor someone&apos;s recovery for $0.62/month
+                Help keep IRIS free for everyone
               </h2>
               <p className="font-sans text-base text-text-secondary max-w-md mx-auto mb-8 leading-relaxed">
-                Your donation gives someone who can&apos;t afford it a full year of
-                AI-guided recovery support through IRIS.
+                IRIS is free to use. Your donation helps us keep it that way —
+                supporting the servers, AI, and people behind the project.
               </p>
               <Link
                 href="/donate"
@@ -124,8 +132,8 @@ export default function HomePage() {
               <Link href="/login" className="hover:text-text-secondary transition-colors">
                 Sign In
               </Link>
-              <Link href="/onboarding" className="hover:text-text-secondary transition-colors">
-                Begin Journey
+              <Link href="/signup" className="hover:text-text-secondary transition-colors">
+                Get Started
               </Link>
             </div>
             <p className="font-sans text-xs text-text-muted text-center max-w-lg leading-relaxed">
