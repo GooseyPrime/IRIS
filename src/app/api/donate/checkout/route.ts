@@ -2,10 +2,6 @@ import Stripe from 'stripe'
 import { NextResponse } from 'next/server'
 import { z } from 'zod'
 
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY ?? '', {
-  apiVersion: '2026-03-25.dahlia',
-})
-
 const TIERS = {
   spark: { mode: 'subscription' as const, amount: 1000, interval: 'month' as const, label: 'Spark — $10/mo' },
   ember: { mode: 'subscription' as const, amount: 2500, interval: 'month' as const, label: 'Ember — $25/mo' },
@@ -25,6 +21,10 @@ export async function POST(request: Request) {
   if (!process.env.STRIPE_SECRET_KEY) {
     return NextResponse.json({ error: 'Stripe is not configured' }, { status: 503 })
   }
+
+  const stripe = new Stripe(process.env.STRIPE_SECRET_KEY, {
+    apiVersion: '2026-03-25.dahlia',
+  })
 
   const body: unknown = await request.json()
   const parsed = CheckoutRequestSchema.safeParse(body)
