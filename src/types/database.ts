@@ -231,6 +231,36 @@ export interface Database {
         }
         Relationships: []
       }
+      pending_sponsorships: {
+        Row: {
+          id: string
+          created_at: string
+          recipient_email: string
+          stripe_session_id: string
+          tier: string
+          applied: boolean
+          applied_at: string | null
+        }
+        Insert: {
+          id?: string
+          created_at?: string
+          recipient_email: string
+          stripe_session_id: string
+          tier: string
+          applied?: boolean
+          applied_at?: string | null
+        }
+        Update: {
+          id?: string
+          created_at?: string
+          recipient_email?: string
+          stripe_session_id?: string
+          tier?: string
+          applied?: boolean
+          applied_at?: string | null
+        }
+        Relationships: []
+      }
     }
     Views: Record<string, never>
     Functions: Record<string, never>
