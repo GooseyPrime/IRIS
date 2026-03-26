@@ -103,7 +103,7 @@ export function CinematicOnboarding() {
   const [answer, setAnswer] = useState('')
   const [selectedOptions, setSelectedOptions] = useState<string[]>([])
   const [history, setHistory] = useState<HistoryEntry[]>([])
-  const [phase, setPhase] = useState<'loading' | 'question' | 'transitioning' | 'saving' | 'error'>('loading')
+  const [phase, setPhase] = useState<'loading' | 'question' | 'transitioning' | 'saving' | 'skipping' | 'error'>('loading')
   const [serverError, setServerError] = useState<string | null>(null)
   const [authInitialised, setAuthInitialised] = useState(false)
   const authAttempted = useRef(false)
@@ -235,6 +235,19 @@ export function CinematicOnboarding() {
     }
   }
 
+  async function handleSkip() {
+    setPhase('skipping')
+    setServerError(null)
+
+    const result = await skipOnboarding()
+
+    // skipOnboarding redirects on success — only reach here on error
+    if (!result.success) {
+      setServerError(result.error)
+      setPhase('error')
+    }
+  }
+
   function toggleOption(option: string) {
     setSelectedOptions((prev) =>
       prev.includes(option) ? prev.filter((o) => o !== option) : [...prev, option],
@@ -278,6 +291,17 @@ export function CinematicOnboarding() {
           <p className="font-sans text-sm text-text-muted">
             {questionIndex === 0 ? 'Preparing your conversation…' : 'Thinking…'}
           </p>
+        </div>
+      )}
+
+      {/* Skipping state */}
+      {phase === 'skipping' && (
+        <div className="flex flex-col items-center gap-4">
+          <span
+            className="w-6 h-6 rounded-full border-2 border-gold-400 border-t-transparent animate-spin"
+            aria-hidden="true"
+          />
+          <p className="font-serif text-xl text-text-primary">Setting up your account…</p>
         </div>
       )}
 
