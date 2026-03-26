@@ -83,3 +83,47 @@ export async function completeOnboarding(
 
   redirect('/dashboard')
 }
+
+/**
+ * Skip onboarding — creates a minimal profile with defaults so the user
+ * can go straight to the dashboard and fill in their profile later via Settings.
+ */
+export async function skipOnboarding(): Promise<Result<{ userId: string }>> {
+  const supabase = await createClient()
+
+  const {
+    data: { user },
+    error: userError,
+  } = await supabase.auth.getUser()
+
+  if (userError) {
+    console.error('[skipOnboarding] getUser error:', userError)
+    return { success: false, error: 'Authentication error. Please sign in again.' }
+  }
+
+  if (!user) {
+    return { success: false, error: 'Not authenticated' }
+  }
+
+  const { error: upsertError } = await supabase.from('user_profiles').upsert({
+    id: user.id,
+    substances: ['other'],
+    sobriety_date: null,
+    goals: ['Stay sober one day at a time'],
+    triggers: [],
+    tone_preference: 'warm',
+    onboarding_completed: true,
+    updated_at: new Date().toISOString(),
+  })
+
+  if (upsertError) {
+    console.error('[skipOnboarding] upsert error:', {
+      code: upsertError.code,
+      message: upsertError.message,
+      userId: user.id,
+    })
+    return { success: false, error: 'Failed to save your profile. Please try again.' }
+  }
+
+  redirect('/dashboard')
+}
