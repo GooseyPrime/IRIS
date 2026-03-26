@@ -416,7 +416,7 @@ export function CinematicOnboarding() {
         </p>
         <button
           type="button"
-          disabled={skipping}
+          disabled={skipping || !authInitialised}
           onClick={async () => {
             setSkipping(true)
             const result = await skipOnboarding()
