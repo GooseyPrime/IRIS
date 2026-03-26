@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
-import { completeOnboarding } from '@/app/(auth)/onboarding/_actions'
+import { completeOnboarding, skipOnboarding } from '@/app/(auth)/onboarding/_actions'
 import type { SubstanceOption, TonePreference } from '@/types'
 import { SUBSTANCE_OPTIONS, TRIGGER_OPTIONS, GOAL_OPTIONS } from '@/types'
 
@@ -107,6 +107,8 @@ export function CinematicOnboarding() {
   const [serverError, setServerError] = useState<string | null>(null)
   const [authInitialised, setAuthInitialised] = useState(false)
   const authAttempted = useRef(false)
+
+  const [skipping, setSkipping] = useState(false)
 
   const [extractedData, setExtractedData] = useState<ExtractedData>({
     substances: [],
@@ -401,8 +403,8 @@ export function CinematicOnboarding() {
         </div>
       )}
 
-      {/* Sign-in link */}
-      <div className="fixed bottom-16 left-1/2 -translate-x-1/2">
+      {/* Sign-in & skip links */}
+      <div className="fixed bottom-16 left-1/2 -translate-x-1/2 flex flex-col items-center gap-2">
         <p className="font-sans text-xs text-text-muted">
           Already have an account?{' '}
           <a
@@ -412,6 +414,23 @@ export function CinematicOnboarding() {
             Sign in
           </a>
         </p>
+        <button
+          type="button"
+          disabled={skipping}
+          onClick={async () => {
+            setSkipping(true)
+            const result = await skipOnboarding()
+            // skipOnboarding redirects on success — only reach here on error
+            if (!result.success) {
+              setServerError(result.error)
+              setPhase('error')
+              setSkipping(false)
+            }
+          }}
+          className="font-sans text-xs text-text-muted hover:text-iris-300 underline underline-offset-2 transition-colors disabled:opacity-50"
+        >
+          {skipping ? 'Skipping…' : 'Skip interview — set up profile manually'}
+        </button>
       </div>
     </div>
   )
