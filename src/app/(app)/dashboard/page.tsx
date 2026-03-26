@@ -1,4 +1,5 @@
 import { redirect } from 'next/navigation'
+import Link from 'next/link'
 import { createClient } from '@/lib/supabase/server'
 import { DashboardShell } from '@/components/dashboard/DashboardShell'
 import { SobrietyCounter } from '@/components/dashboard/SobrietyCounter'
@@ -41,14 +42,14 @@ export default async function DashboardPage() {
         />
       </section>
 
-      {/* Quick actions */}
+      {/* Primary actions */}
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-        <PlaceholderCard
-          title="Evening Reflection"
-          description="How was your day? Check in with IRIS."
-          href="/reflection"
+        <DashboardCard
+          title="Morning Check-in"
+          description="Start your day with intention."
+          href="/check-in"
         />
-        <PlaceholderCard
+        <DashboardCard
           title="Talk to IRIS"
           description="Your AI companion is here."
           href="/chat"
@@ -57,52 +58,66 @@ export default async function DashboardPage() {
 
       {/* Secondary actions */}
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-4">
-        <PlaceholderCard
+        <DashboardCard
+          title="Evening Reflection"
+          description="How was your day? Check in with IRIS."
+          href="/reflection"
+        />
+        <DashboardCard
           title="Past Sessions"
           description="Browse your conversation history."
           href="/history"
         />
-        <PlaceholderCard
+      </div>
+
+      {/* Tertiary actions */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-4">
+        <DashboardCard
           title="Reminders"
           description="Set morning and evening check-in reminders."
           href="/reminders"
         />
+        <DashboardCard
+          title="My Profile"
+          description="View and edit your preferences."
+          href="/settings"
+        />
+      </div>
+
+      {/* Feedback link */}
+      <div className="mt-6 text-center">
+        <Link
+          href="/feedback"
+          className="font-sans text-sm text-text-muted hover:text-iris-400 underline underline-offset-2 transition-colors"
+        >
+          Give Feedback
+        </Link>
       </div>
     </DashboardShell>
   )
 }
 
-function PlaceholderCard({
+function DashboardCard({
   title,
   description,
   href,
-  comingSoon = false,
 }: {
   title: string
   description: string
   href: string
-  comingSoon?: boolean
 }) {
   return (
-    <a
-      href={comingSoon ? undefined : href}
-      aria-disabled={comingSoon}
+    <Link
+      href={href}
       className={[
         'flex flex-col gap-2 p-6 rounded-2xl border border-iris-900/30 bg-surface-1',
         'transition-all duration-200',
-        comingSoon
-          ? 'opacity-50 cursor-not-allowed'
-          : 'hover:border-iris-600/50 hover:bg-surface-2 cursor-pointer',
+        'hover:border-iris-600/50 hover:bg-surface-2 cursor-pointer',
         'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-iris-500 focus-visible:ring-offset-2 focus-visible:ring-offset-surface-0',
       ].join(' ')}
     >
       <p className="font-sans font-semibold text-sm text-text-primary">{title}</p>
       <p className="font-sans text-xs text-text-muted leading-relaxed">{description}</p>
-      {comingSoon && (
-        <span className="font-sans text-[0.6rem] uppercase tracking-[0.15em] text-iris-600 mt-1">
-          Coming soon
-        </span>
-      )}
-    </a>
+    </Link>
   )
 }

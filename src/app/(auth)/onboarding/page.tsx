@@ -1,5 +1,5 @@
 import type { Metadata } from 'next'
-import { OnboardingWizard } from '@/components/onboarding/OnboardingWizard'
+import { CinematicOnboarding } from '@/components/onboarding/CinematicOnboarding'
 
 export const metadata: Metadata = {
   title: 'IRIS — Your Journey Begins',
@@ -7,5 +7,5 @@ export const metadata: Metadata = {
 }
 
 export default function OnboardingPage() {
-  return <OnboardingWizard />
+  return <CinematicOnboarding />
 }
