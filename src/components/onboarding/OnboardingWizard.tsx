@@ -126,7 +126,7 @@ export function OnboardingWizard() {
         <p className="font-serif font-light text-4xl tracking-tight text-zinc-100">
           IRIS
         </p>
-        <p className="font-sans text-xs text-zinc-400 mt-1 uppercase tracking-[0.2em]">
+        <p className="font-sans text-xs text-zinc-400 mt-1 uppercase tracking-[0.2em] whitespace-nowrap">
           I Rise, I Shine
         </p>
       </div>

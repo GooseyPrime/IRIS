@@ -54,7 +54,7 @@ export function ForgotPasswordForm() {
           <p className="font-serif font-light text-4xl tracking-tight text-text-primary">
             IRIS
           </p>
-          <p className="font-sans text-xs text-text-muted mt-1 uppercase tracking-[0.2em]">
+          <p className="font-sans text-xs text-text-muted mt-1 uppercase tracking-[0.2em] whitespace-nowrap">
             I Rise, I Shine
           </p>
         </div>
@@ -106,7 +106,7 @@ export function ForgotPasswordForm() {
         <p className="font-serif font-light text-4xl tracking-tight text-text-primary">
           IRIS
         </p>
-        <p className="font-sans text-xs text-text-muted mt-1 uppercase tracking-[0.2em]">
+        <p className="font-sans text-xs text-text-muted mt-1 uppercase tracking-[0.2em] whitespace-nowrap">
           I Rise, I Shine
         </p>
       </div>
