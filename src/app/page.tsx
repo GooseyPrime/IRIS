@@ -37,7 +37,7 @@ export default function HomePage() {
             <VineAnimationWrapper />
           </div>
 
-          <div className="relative z-10 bg-black/40 backdrop-blur-xl border border-white/10 rounded-3xl shadow-2xl px-10 py-20 sm:px-20 max-w-4xl w-full">
+          <div className="relative z-10 bg-black backdrop-blur-xl border border-white/10 rounded-3xl shadow-2xl px-10 py-20 sm:px-20 max-w-4xl w-full">
             <div className="flex flex-col items-center gap-10 text-center animate-fade-up">
               <p className="text-[0.75rem] uppercase tracking-[0.2em] text-gold-500">
                 Your Journey Begins
@@ -65,7 +65,7 @@ export default function HomePage() {
         </section>
 
         {/* HOW IRIS WORKS */}
-        <section className="px-6 py-20 bg-surface-1/50">
+        <section className="px-6 py-20 bg-black">
           <div className="max-w-4xl mx-auto">
             <h2 className="font-serif font-semibold text-3xl text-center text-text-primary mb-12">
               How IRIS Works
@@ -93,7 +93,7 @@ export default function HomePage() {
         {/* GUIDING LIGHT CTA */}
         <section className="px-6 py-20">
           <div className="max-w-2xl mx-auto">
-            <div className="bg-surface-1 border border-gold-500/20 rounded-3xl p-10 text-center">
+            <div className="bg-black border border-gold-500/20 rounded-3xl p-10 text-center">
               <p className="text-[0.75rem] uppercase tracking-[0.2em] text-gold-500 mb-4">
                 Become a Guiding Light
               </p>
