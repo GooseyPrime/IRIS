@@ -41,7 +41,7 @@ export function SignUpForm() {
       email: parsed.data.email,
       password: parsed.data.password,
       options: {
-        emailRedirectTo: `${window.location.origin}/auth/callback?next=/onboarding`,
+        emailRedirectTo: `${window.location.origin}/auth/callback?next=/auth/redirect`,
       },
     })
 
@@ -126,7 +126,7 @@ export function SignUpForm() {
         </h1>
 
         {/* Google sign-up */}
-        <GoogleAuthButton mode="signup" redirectTo="/onboarding" />
+        <GoogleAuthButton mode="signup" redirectTo="/auth/redirect" />
 
         {/* Divider */}
         <div className="flex items-center gap-3 my-5">
@@ -199,12 +199,12 @@ export function SignUpForm() {
           </Link>
         </p>
         <p className="font-sans text-center text-sm text-text-muted">
-          Want to explore first?{' '}
+          Want to support IRIS?{' '}
           <Link
-            href="/onboarding"
+            href="/donate"
             className="text-gold-400 hover:text-gold-300 transition-colors underline underline-offset-2"
           >
-            Begin your journey
+            Make a donation
           </Link>
         </p>
       </div>

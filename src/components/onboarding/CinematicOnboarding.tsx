@@ -1,8 +1,7 @@
 'use client'
 
 import { useCallback, useEffect, useRef, useState } from 'react'
-import { createClient } from '@/lib/supabase/client'
-import { completeOnboarding } from '@/app/(auth)/onboarding/_actions'
+import { completeOnboarding, skipOnboarding } from '@/app/(auth)/onboarding/_actions'
 import type { SubstanceOption, TonePreference } from '@/types'
 import { SUBSTANCE_OPTIONS, TRIGGER_OPTIONS, GOAL_OPTIONS } from '@/types'
 
@@ -103,10 +102,9 @@ export function CinematicOnboarding() {
   const [answer, setAnswer] = useState('')
   const [selectedOptions, setSelectedOptions] = useState<string[]>([])
   const [history, setHistory] = useState<HistoryEntry[]>([])
-  const [phase, setPhase] = useState<'loading' | 'question' | 'transitioning' | 'saving' | 'error'>('loading')
+  const [phase, setPhase] = useState<'loading' | 'question' | 'transitioning' | 'saving' | 'skipping' | 'error'>('loading')
   const [serverError, setServerError] = useState<string | null>(null)
-  const [authInitialised, setAuthInitialised] = useState(false)
-  const authAttempted = useRef(false)
+  const initDone = useRef(false)
 
   const [extractedData, setExtractedData] = useState<ExtractedData>({
     substances: [],
@@ -117,34 +115,13 @@ export function CinematicOnboarding() {
     tonePreference: 'warm',
   })
 
-  // Anonymous auth on mount
+  // User is already authenticated (server-side check in page.tsx ensures this).
+  // Fetch first question on mount.
   useEffect(() => {
-    if (authAttempted.current) return
-    authAttempted.current = true
-
-    async function initAuth() {
-      const supabase = createClient()
-      const {
-        data: { user },
-      } = await supabase.auth.getUser()
-
-      if (!user) {
-        const { error } = await supabase.auth.signInAnonymously()
-        if (error) {
-          console.error('[CinematicOnboarding] anonymous auth error:', error)
-        }
-      }
-      setAuthInitialised(true)
-    }
-
-    void initAuth()
-  }, [])
-
-  // Fetch first question after auth
-  useEffect(() => {
-    if (!authInitialised) return
+    if (initDone.current) return
+    initDone.current = true
     void fetchNextQuestion([], 0)
-  }, [authInitialised])
+  }, [])
 
   async function fetchNextQuestion(currentHistory: HistoryEntry[], index: number) {
     setPhase('loading')
@@ -233,6 +210,19 @@ export function CinematicOnboarding() {
     }
   }
 
+  async function handleSkip() {
+    setPhase('skipping')
+    setServerError(null)
+
+    const result = await skipOnboarding()
+
+    // skipOnboarding redirects on success — only reach here on error
+    if (!result.success) {
+      setServerError(result.error)
+      setPhase('error')
+    }
+  }
+
   function toggleOption(option: string) {
     setSelectedOptions((prev) =>
       prev.includes(option) ? prev.filter((o) => o !== option) : [...prev, option],
@@ -279,6 +269,17 @@ export function CinematicOnboarding() {
         </div>
       )}
 
+      {/* Skipping state */}
+      {phase === 'skipping' && (
+        <div className="flex flex-col items-center gap-4">
+          <span
+            className="w-6 h-6 rounded-full border-2 border-gold-400 border-t-transparent animate-spin"
+            aria-hidden="true"
+          />
+          <p className="font-serif text-xl text-text-primary">Setting up your account…</p>
+        </div>
+      )}
+
       {/* Saving state */}
       {phase === 'saving' && (
         <div className="flex flex-col items-center gap-4">
@@ -294,12 +295,26 @@ export function CinematicOnboarding() {
       {phase === 'error' && (
         <div className="flex flex-col items-center gap-4 text-center max-w-md">
           <p className="font-sans text-sm text-error" role="alert">{serverError}</p>
-          <button
-            onClick={() => void fetchNextQuestion(history, questionIndex)}
-            className="px-6 py-3 rounded-xl bg-iris-600 text-white font-sans text-sm font-medium hover:bg-iris-500 transition-colors"
-          >
-            Try again
-          </button>
+          <div className="flex flex-col gap-3">
+            <button
+              onClick={() => void fetchNextQuestion(history, questionIndex)}
+              className="px-6 py-3 rounded-xl bg-iris-600 text-white font-sans text-sm font-medium hover:bg-iris-500 transition-colors"
+            >
+              Try again
+            </button>
+            <button
+              onClick={() => void handleSkip()}
+              className="px-6 py-3 rounded-xl border border-gold-500/40 text-gold-400 font-sans text-sm font-medium hover:bg-gold-500/10 transition-colors"
+            >
+              Skip to dashboard
+            </button>
+            <a
+              href="/dashboard"
+              className="font-sans text-xs text-text-muted hover:text-iris-300 underline underline-offset-2 transition-colors"
+            >
+              Go to dashboard
+            </a>
+          </div>
         </div>
       )}
 
@@ -401,16 +416,18 @@ export function CinematicOnboarding() {
         </div>
       )}
 
-      {/* Sign-in link */}
-      <div className="fixed bottom-16 left-1/2 -translate-x-1/2">
+      {/* Bottom links: skip + sign-in */}
+      <div className="fixed bottom-16 left-1/2 -translate-x-1/2 flex flex-col items-center gap-2">
         <p className="font-sans text-xs text-text-muted">
-          Already have an account?{' '}
-          <a
-            href="/login"
-            className="text-iris-400 hover:text-iris-300 underline underline-offset-2 transition-colors"
+          <button
+            type="button"
+            onClick={() => void handleSkip()}
+            disabled={phase === 'skipping' || phase === 'saving'}
+            className="text-gold-400 hover:text-gold-300 underline underline-offset-2 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            Sign in
-          </a>
+            Skip interview
+          </button>
+          {' — '}set up your profile manually later
         </p>
       </div>
     </div>

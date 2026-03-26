@@ -75,11 +75,12 @@ export default function DonatePage() {
             Become a Guiding Light
           </p>
           <h1 className="font-serif font-light text-4xl sm:text-5xl text-text-primary leading-tight mb-4">
-            Your $10/month gives one person a full year of recovery support.
+            Help keep IRIS free for everyone.
           </h1>
           <p className="font-sans text-base text-text-secondary max-w-md mx-auto leading-relaxed">
-            Sponsor access to AI-guided recovery support for people who need it.
-            Every contribution lights the way for someone in their journey.
+            IRIS is free to use — always. Your donation helps cover the AI,
+            servers, and development that make it possible.
+            You can also donate in honor of someone you care about.
           </p>
         </section>
 
@@ -154,10 +155,11 @@ export default function DonatePage() {
         <section className="max-w-lg mx-auto mb-16">
           <div className="bg-surface-1 border border-iris-900/30 rounded-2xl p-8">
             <h2 className="font-serif font-semibold text-xl text-text-primary text-center mb-2">
-              Know someone who could use IRIS?
+              Donate in honor of someone
             </h2>
             <p className="font-sans text-sm text-text-secondary text-center mb-6 leading-relaxed">
-              Enter their email and we&apos;ll credit their account when they sign up.
+              Want to dedicate your donation to someone special? Enter their email
+              and it will appear on their profile as a gift from a guiding light.
             </p>
 
             <div className="flex flex-col gap-4">
@@ -206,8 +208,8 @@ export default function DonatePage() {
           </h2>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             <HowStep number="1" title="You Give" description="Choose a tier or enter a custom amount. Payment is handled securely through Stripe." />
-            <HowStep number="2" title="We Match" description="Your donation is matched to a user who needs recovery support but cannot afford it." />
-            <HowStep number="3" title="They Get IRIS" description="The recipient receives free access to IRIS — AI-guided support for their sobriety journey." />
+            <HowStep number="2" title="We Build" description="Your donation funds the AI, servers, and development that keep IRIS free for everyone." />
+            <HowStep number="3" title="They Rise" description="People in recovery get free access to an AI companion that's there for them, day and night." />
           </div>
         </section>
 
