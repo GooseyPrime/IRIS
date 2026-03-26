@@ -108,6 +108,8 @@ export function CinematicOnboarding() {
   const [authInitialised, setAuthInitialised] = useState(false)
   const authAttempted = useRef(false)
 
+  const [skipping, setSkipping] = useState(false)
+
   const [extractedData, setExtractedData] = useState<ExtractedData>({
     substances: [],
     sobrietyDate: '',
@@ -425,19 +427,8 @@ export function CinematicOnboarding() {
         </div>
       )}
 
-      {/* Bottom links */}
+      {/* Sign-in & skip links */}
       <div className="fixed bottom-16 left-1/2 -translate-x-1/2 flex flex-col items-center gap-2">
-        <p className="font-sans text-xs text-text-muted">
-          <button
-            type="button"
-            onClick={() => void handleSkip()}
-            disabled={!authInitialised || phase === 'skipping' || phase === 'saving'}
-            className="text-gold-400 hover:text-gold-300 underline underline-offset-2 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-          >
-            Skip interview
-          </button>
-          {' — '}set up your profile manually later
-        </p>
         <p className="font-sans text-xs text-text-muted">
           Already have an account?{' '}
           <a
@@ -447,6 +438,23 @@ export function CinematicOnboarding() {
             Sign in
           </a>
         </p>
+        <button
+          type="button"
+          disabled={skipping || !authInitialised}
+          onClick={async () => {
+            setSkipping(true)
+            const result = await skipOnboarding()
+            // skipOnboarding redirects on success — only reach here on error
+            if (!result.success) {
+              setServerError(result.error)
+              setPhase('error')
+              setSkipping(false)
+            }
+          }}
+          className="font-sans text-xs text-text-muted hover:text-iris-300 underline underline-offset-2 transition-colors disabled:opacity-50"
+        >
+          {skipping ? 'Skipping…' : 'Skip interview — set up profile manually'}
+        </button>
       </div>
     </div>
   )
