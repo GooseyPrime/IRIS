@@ -17,25 +17,40 @@ export function FeedbackForm() {
     setLoading(true)
     setError(null)
 
-    const res = await fetch('/api/feedback', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        npsScore: npsScore ?? undefined,
-        comment: comment || undefined,
-        category: category || undefined,
-      }),
-    })
+    try {
+      const res = await fetch('/api/feedback', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          npsScore: npsScore ?? undefined,
+          comment: comment || undefined,
+          category: category || undefined,
+        }),
+      })
 
-    setLoading(false)
+      const json: unknown = await res.json().catch(() => null)
+      const isSuccess =
+        json !== null &&
+        typeof json === 'object' &&
+        (json as Record<string, unknown>).success === true
+      const errorMsg =
+        json !== null &&
+        typeof json === 'object' &&
+        typeof (json as Record<string, unknown>).error === 'string'
+          ? ((json as Record<string, unknown>).error as string)
+          : 'Something went wrong'
 
-    if (!res.ok) {
-      const data = await res.json().catch(() => ({ error: 'Something went wrong' })) as { error?: string }
-      setError(data.error ?? 'Something went wrong')
-      return
+      if (!res.ok || !isSuccess) {
+        setError(errorMsg)
+        return
+      }
+
+      setSubmitted(true)
+    } catch {
+      setError('Unable to submit feedback. Please check your connection and try again.')
+    } finally {
+      setLoading(false)
     }
-
-    setSubmitted(true)
   }
 
   if (submitted) {

@@ -1,10 +1,5 @@
 import Link from 'next/link'
-import dynamic from 'next/dynamic'
-
-const VineAnimation = dynamic(
-  () => import('@/components/landing/VineAnimation').then((m) => m.VineAnimation),
-  { ssr: false },
-)
+import { VineAnimationWrapper } from '@/components/landing/VineAnimationWrapper'
 
 export const metadata = {
   title: 'IRIS — I Rise, I Shine',
@@ -39,7 +34,7 @@ export default function HomePage() {
         {/* HERO */}
         <section className="relative flex flex-1 flex-col items-center justify-center px-6 pt-20 pb-16 overflow-hidden">
           <div className="absolute inset-0 opacity-40">
-            <VineAnimation />
+            <VineAnimationWrapper />
           </div>
 
           <div className="relative z-10 bg-black/40 backdrop-blur-xl border border-white/10 rounded-3xl shadow-2xl px-8 py-14 sm:px-14 max-w-2xl w-full">
