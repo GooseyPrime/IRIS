@@ -82,10 +82,10 @@ export function CheckInForm({ existingCheckIn }: CheckInFormProps) {
           <p className="font-sans text-[0.75rem] uppercase tracking-[0.2em] text-gold-500">
             Today&apos;s Check-in
           </p>
-          <h1 className="font-serif font-semibold text-3xl text-text-primary">
-            {submitted ? 'Check-in saved ✓' : 'Already checked in'}
+          <h1 className="font-serif font-semibold text-3xl text-zinc-100">
+            {submitted ? 'Check-in saved \u2713' : 'Already checked in'}
           </h1>
-          <p className="font-sans text-sm text-text-secondary">
+          <p className="font-sans text-sm text-zinc-400">
             {submitted
               ? 'Great work showing up for yourself today.'
               : 'You already completed your check-in today.'}
@@ -93,7 +93,7 @@ export function CheckInForm({ existingCheckIn }: CheckInFormProps) {
         </div>
 
         {/* Summary card */}
-        <div className="bg-surface-1 rounded-2xl border border-iris-900/30 p-6 flex flex-col gap-5">
+        <div className="bg-black/40 backdrop-blur-xl border border-white/10 rounded-3xl shadow-2xl p-6 flex flex-col gap-5">
           {/* Mood */}
           <div className="flex items-center gap-3">
             <span className="text-3xl" aria-hidden="true">
@@ -184,16 +184,16 @@ export function CheckInForm({ existingCheckIn }: CheckInFormProps) {
         <p className="font-sans text-[0.75rem] uppercase tracking-[0.2em] text-gold-500">
           Daily ritual
         </p>
-        <h1 className="font-serif font-semibold text-3xl text-text-primary">
+        <h1 className="font-serif font-semibold text-3xl text-zinc-100">
           Morning check-in
         </h1>
-        <p className="font-sans text-sm text-text-secondary">
+        <p className="font-sans text-sm text-zinc-400">
           A moment to pause and notice how you&apos;re doing.
         </p>
       </div>
 
       {/* Mood */}
-      <section className="bg-surface-1 rounded-2xl border border-iris-900/30 p-5">
+      <section className="bg-black/40 backdrop-blur-xl border border-white/10 rounded-3xl shadow-2xl p-5">
         <MoodSelector
           value={form.mood}
           onChange={(mood) => setForm((s) => ({ ...s, mood }))}
@@ -201,7 +201,7 @@ export function CheckInForm({ existingCheckIn }: CheckInFormProps) {
       </section>
 
       {/* Sobriety pledge */}
-      <section className="bg-surface-1 rounded-2xl border border-iris-900/30 p-5">
+      <section className="bg-black/40 backdrop-blur-xl border border-white/10 rounded-3xl shadow-2xl p-5">
         <SobrietyPledge
           value={form.soberToday}
           onChange={(soberToday) => setForm((s) => ({ ...s, soberToday }))}
@@ -209,7 +209,7 @@ export function CheckInForm({ existingCheckIn }: CheckInFormProps) {
       </section>
 
       {/* Emotion tags */}
-      <section className="bg-surface-1 rounded-2xl border border-iris-900/30 p-5">
+      <section className="bg-black/40 backdrop-blur-xl border border-white/10 rounded-3xl shadow-2xl p-5">
         <EmotionTags
           value={form.emotions}
           onChange={(emotions) => setForm((s) => ({ ...s, emotions }))}
@@ -217,7 +217,7 @@ export function CheckInForm({ existingCheckIn }: CheckInFormProps) {
       </section>
 
       {/* Optional note */}
-      <section className="bg-surface-1 rounded-2xl border border-iris-900/30 p-5 flex flex-col gap-2">
+      <section className="bg-black/40 backdrop-blur-xl border border-white/10 rounded-3xl shadow-2xl p-5 flex flex-col gap-2">
         <label
           htmlFor="check-in-note"
           className="font-sans text-sm font-medium text-text-secondary"

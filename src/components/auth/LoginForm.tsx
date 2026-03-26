@@ -52,17 +52,17 @@ export function LoginForm() {
     <div className="flex flex-col gap-8">
       {/* IRIS wordmark */}
       <div className="text-center">
-        <p className="font-serif font-light text-4xl tracking-tight text-text-primary">
+        <p className="font-serif font-light text-4xl tracking-tight text-zinc-100">
           IRIS
         </p>
-        <p className="font-sans text-xs text-text-muted mt-1 uppercase tracking-[0.2em]">
+        <p className="font-sans text-xs text-zinc-400 mt-1 uppercase tracking-[0.2em]">
           I Rise, I Shine
         </p>
       </div>
 
       {/* Card */}
-      <div className="bg-surface-1 rounded-3xl border border-iris-900/30 p-8 shadow-[0_8px_40px_rgba(107,76,230,0.08)]">
-        <h1 className="font-serif font-light text-2xl text-text-primary text-center mb-6">
+      <div className="bg-black/40 backdrop-blur-xl border border-white/10 rounded-3xl shadow-2xl p-8">
+        <h1 className="font-serif font-light text-2xl text-zinc-100 text-center mb-6">
           Welcome back
         </h1>
 
@@ -80,7 +80,7 @@ export function LoginForm() {
           <div className="flex flex-col gap-1.5">
             <label
               htmlFor="email"
-              className="font-sans text-sm text-text-secondary"
+              className="font-sans text-sm text-zinc-400"
             >
               Email
             </label>
@@ -91,7 +91,7 @@ export function LoginForm() {
               required
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              className="bg-surface-0 border border-iris-900/40 rounded-xl px-4 py-3 font-sans text-sm text-text-primary placeholder:text-text-muted focus:outline-none focus:ring-2 focus:ring-iris-500 focus:ring-offset-2 focus:ring-offset-surface-1 transition-all duration-200"
+              className="bg-black/30 border border-white/10 rounded-xl px-4 py-3 font-sans text-sm text-zinc-100 placeholder:text-zinc-500 focus:outline-none focus:ring-2 focus:ring-iris-500 focus:ring-offset-2 focus:ring-offset-black transition-all duration-200"
               placeholder="you@example.com"
             />
           </div>
