@@ -52,7 +52,7 @@ npm install -g pnpm
 pnpm install
 
 # 3. Copy the env template and fill in your keys
-cp .env.example .env.local
+cp .env.local.example .env.local
 
 # 4. Start the dev server
 pnpm dev

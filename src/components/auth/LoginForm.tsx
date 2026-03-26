@@ -45,7 +45,7 @@ export function LoginForm() {
       return
     }
 
-    router.push('/dashboard')
+    router.push('/auth/redirect')
   }
 
   return (
@@ -67,7 +67,7 @@ export function LoginForm() {
         </h1>
 
         {/* Google sign-in */}
-        <GoogleAuthButton mode="signin" redirectTo="/dashboard" />
+        <GoogleAuthButton mode="signin" redirectTo="/auth/redirect" />
 
         {/* Divider */}
         <div className="flex items-center gap-3 my-5">

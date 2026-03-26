@@ -1,3 +1,5 @@
+import Link from 'next/link'
+
 interface DashboardShellProps {
   children: React.ReactNode
 }
@@ -6,16 +8,25 @@ export function DashboardShell({ children }: DashboardShellProps) {
   return (
     <div className="min-h-screen">
       <nav className="sticky top-0 z-10 flex items-center justify-between px-6 py-4 border-b border-white/5 bg-black/30 backdrop-blur-md">
-        <span className="font-serif font-light text-xl tracking-tight text-zinc-100">
+        <Link
+          href="/dashboard"
+          className="font-serif font-light text-xl tracking-tight text-zinc-100"
+        >
           IRIS
-        </span>
+        </Link>
         <div className="flex items-center gap-4">
-          <a
+          <Link
             href="/settings"
             className="font-sans text-sm text-zinc-400 hover:text-zinc-100 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-iris-500 focus-visible:ring-offset-2 focus-visible:ring-offset-black rounded"
           >
             Settings
-          </a>
+          </Link>
+          <Link
+            href="/feedback"
+            className="font-sans text-sm text-zinc-400 hover:text-zinc-100 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-iris-500 focus-visible:ring-offset-2 focus-visible:ring-offset-black rounded"
+          >
+            Feedback
+          </Link>
         </div>
       </nav>
 

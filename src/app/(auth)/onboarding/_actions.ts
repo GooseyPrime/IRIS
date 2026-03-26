@@ -12,7 +12,13 @@ export async function completeOnboarding(
 
   const {
     data: { user },
+    error: userError,
   } = await supabase.auth.getUser()
+
+  if (userError) {
+    console.error('[completeOnboarding] getUser error:', userError)
+    return { success: false, error: 'Authentication error. Please sign in again.' }
+  }
 
   if (!user) {
     return { success: false, error: 'Not authenticated' }
@@ -39,7 +45,13 @@ export async function completeOnboarding(
   })
 
   if (upsertError) {
-    console.error('[completeOnboarding] upsert error:', upsertError)
+    console.error('[completeOnboarding] upsert error:', {
+      code: upsertError.code,
+      message: upsertError.message,
+      details: upsertError.details,
+      hint: upsertError.hint,
+      userId: user.id,
+    })
     return { success: false, error: 'Failed to save your profile. Please try again.' }
   }
 

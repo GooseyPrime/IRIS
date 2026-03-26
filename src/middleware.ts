@@ -48,6 +48,9 @@ export async function middleware(request: NextRequest) {
     pathname.startsWith('/reset-password') ||
     pathname.startsWith('/auth/callback') ||
     pathname.startsWith('/onboarding') ||
+    pathname.startsWith('/donate') ||
+    pathname.startsWith('/api/donate') ||
+    pathname.startsWith('/auth/redirect') ||
     pathname.startsWith('/api/webhooks')
 
   if (!user && !isPublicRoute) {

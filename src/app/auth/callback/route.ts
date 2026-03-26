@@ -14,10 +14,10 @@ import type { CookieOptions } from '@supabase/ssr'
 export async function GET(request: NextRequest) {
   const { searchParams, origin } = new URL(request.url)
   const code = searchParams.get('code')
-  const next = searchParams.get('next') ?? '/dashboard'
+  const next = searchParams.get('next') ?? '/auth/redirect'
 
   // `next` must be a relative path to prevent open-redirect attacks
-  const safeNext = next.startsWith('/') ? next : '/dashboard'
+  const safeNext = next.startsWith('/') ? next : '/auth/redirect'
 
   if (code) {
     const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
