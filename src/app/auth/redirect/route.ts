@@ -31,8 +31,8 @@ export async function GET(request: Request) {
     return NextResponse.redirect(`${origin}/dashboard`)
   }
 
-  // Non-anonymous users (real email/OAuth accounts) already have an account.
-  // Create a default profile, mark onboarding complete, and go to settings.
+  // Non-anonymous users (real email/OAuth accounts) — create a default
+  // profile, mark onboarding complete, and send them to the dashboard.
   const isAnonymous = user.is_anonymous === true
   if (!isAnonymous) {
     await supabase.from('user_profiles').upsert({
@@ -45,7 +45,7 @@ export async function GET(request: Request) {
       onboarding_completed: true,
       updated_at: new Date().toISOString(),
     })
-    return NextResponse.redirect(`${origin}/settings`)
+    return NextResponse.redirect(`${origin}/dashboard`)
   }
 
   // Anonymous users without completed onboarding → start the interview
