@@ -9,8 +9,6 @@ export const metadata: Metadata = {
 }
 
 export default async function OnboardingPage() {
-  // If the user is already authenticated and has completed onboarding,
-  // redirect them to the dashboard instead of showing the interview again.
   const supabase = await createClient()
   const {
     data: { user },
@@ -23,8 +21,26 @@ export default async function OnboardingPage() {
       .eq('id', user.id)
       .single()
 
+    // Already completed onboarding → go straight to dashboard
     if (profile?.onboarding_completed) {
       redirect('/dashboard')
+    }
+
+    // Non-anonymous users (real email/OAuth accounts) already have an account.
+    // Skip the interview and send them to settings to fill in their profile.
+    const isAnonymous = user.is_anonymous === true
+    if (!isAnonymous) {
+      await supabase.from('user_profiles').upsert({
+        id: user.id,
+        substances: ['other'],
+        sobriety_date: null,
+        goals: ['Stay sober one day at a time'],
+        triggers: [],
+        tone_preference: 'warm',
+        onboarding_completed: true,
+        updated_at: new Date().toISOString(),
+      })
+      redirect('/settings')
     }
   }
 

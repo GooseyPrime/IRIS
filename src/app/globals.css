@@ -2,7 +2,7 @@
 
 @theme {
   /* Surfaces */
-  --color-surface-0: #0A0A0F;
+  --color-surface-0: #000242;
   --color-surface-1: #121218;
   --color-surface-2: #1A1A24;
 
@@ -42,7 +42,7 @@
   /* Gradients */
   --background-image-sacred-iris: linear-gradient(135deg, #5A3FD3, #7B5EF6, #9B85FF);
   --background-image-iris-to-gold: linear-gradient(135deg, #5A3FD3, #7B5EF6, #D4A843);
-  --background-image-night-bloom: linear-gradient(180deg, #0A0A0F 0%, #1A1030 50%, #0A0A0F 100%);
+  --background-image-night-bloom: linear-gradient(180deg, #000242 0%, #1A1030 50%, #000242 100%);
 
   /* Typography */
   --font-serif: 'Cormorant Garamond', Georgia, serif;
@@ -64,13 +64,13 @@
 }
 
 :root {
-  --background: #000000;
+  --background: #000242;
   --foreground: #f4f4f5;
 }
 
 body {
-  background-color: #000000;
-  background-image: radial-gradient(circle at top, #18181b, #000000);
+  background-color: #000242;
+  background-image: radial-gradient(circle at top, #0a0c4a, #000242);
   background-attachment: fixed;
   color: #f4f4f5;
   font-family: var(--font-sans);
