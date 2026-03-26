@@ -55,5 +55,31 @@ export async function completeOnboarding(
     return { success: false, error: 'Failed to save your profile. Please try again.' }
   }
 
+  // Check for pending sponsorships by the user's email
+  if (user.email) {
+    const { data: pendingSponsorships } = await supabase
+      .from('pending_sponsorships')
+      .select('id')
+      .eq('recipient_email', user.email)
+      .eq('applied', false)
+
+    if (pendingSponsorships && pendingSponsorships.length > 0) {
+      // Apply sponsorship — upgrade account tier
+      await supabase
+        .from('user_profiles')
+        .update({ account_tier: 'sponsor' })
+        .eq('id', user.id)
+
+      // Mark sponsorships as applied
+      const ids = pendingSponsorships.map((s) => s.id)
+      await supabase
+        .from('pending_sponsorships')
+        .update({ applied: true, applied_at: new Date().toISOString() })
+        .in('id', ids)
+
+      console.log(`[completeOnboarding] Applied ${ids.length} pending sponsorship(s) for ${user.email}`)
+    }
+  }
+
   redirect('/dashboard')
 }
