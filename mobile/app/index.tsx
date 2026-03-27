@@ -175,7 +175,8 @@ export default function HomeScreen() {
   }
 
   async function handleSendMessage() {
-    if (!sessionToken || !canSend) {
+    const activeSession = session
+    if (!sessionToken || !canSend || !activeSession) {
       return
     }
 
@@ -196,7 +197,7 @@ export default function HomeScreen() {
         platform,
         conversationId,
         content,
-        buildUserContext(session),
+        buildUserContext(activeSession),
       )
 
       setMessages((prev) => [

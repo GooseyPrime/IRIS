@@ -8,6 +8,7 @@ type MobileSubscriptionRow = Database['public']['Tables']['mobile_subscriptions'
 type MobileSubscriptionInsert = Database['public']['Tables']['mobile_subscriptions']['Insert']
 type MobileSubscriptionEventInsert =
   Database['public']['Tables']['mobile_subscription_events']['Insert']
+type JsonValue = Database['public']['Tables']['mobile_subscriptions']['Row']['raw_payload']
 
 export interface EntitlementSnapshot {
   hasMobileAiAccess: boolean
@@ -40,6 +41,18 @@ export interface CreateMobileSubscriptionEventInput {
   payload?: Record<string, unknown>
 }
 
+function toJsonValue(value: Record<string, unknown> | undefined): JsonValue {
+  if (!value) {
+    return {}
+  }
+
+  try {
+    return JSON.parse(JSON.stringify(value)) as JsonValue
+  } catch {
+    return {}
+  }
+}
+
 export async function getLatestMobileSubscription(
   supabase: SupabaseClient<Database>,
   userId: string,
@@ -57,7 +70,7 @@ export async function getLatestMobileSubscription(
     throw error
   }
 
-  return data
+  return data as MobileSubscriptionRow | null
 }
 
 export function hasActiveMobileEntitlement(
@@ -113,7 +126,7 @@ export async function upsertMobileSubscription(
     current_period_end: input.currentPeriodEnd ?? null,
     cancel_at_period_end: input.cancelAtPeriodEnd ?? false,
     latest_event_at: input.latestEventAt ?? new Date().toISOString(),
-    raw_payload: input.rawPayload ?? {},
+    raw_payload: toJsonValue(input.rawPayload),
   }
 
   const { error } = await supabase
@@ -139,7 +152,7 @@ export async function insertMobileSubscriptionEvent(
     external_subscription_id: input.externalSubscriptionId ?? null,
     status: input.status ?? null,
     event_at: input.eventAt ?? new Date().toISOString(),
-    payload: input.payload ?? {},
+    payload: toJsonValue(input.payload),
   }
 
   const { error } = await supabase

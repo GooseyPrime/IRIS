@@ -49,7 +49,6 @@ export async function POST(request: Request) {
         },
       ],
       client_reference_id: context.user.id,
-      customer_email: context.user.email ?? undefined,
       allow_promotion_codes: true,
       billing_address_collection: 'auto',
       // Required for zero-dollar invoices (for example, 100% off coupons).
@@ -68,6 +67,7 @@ export async function POST(request: Request) {
           userId: context.user.id,
         },
       },
+      ...(context.user.email ? { customer_email: context.user.email } : {}),
     })
 
     return NextResponse.json({ checkoutUrl: session.url, sessionId: session.id })

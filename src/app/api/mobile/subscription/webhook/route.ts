@@ -46,32 +46,42 @@ export async function POST(request: Request) {
   const payload = parsed.data
 
   try {
-    await insertMobileSubscriptionEvent(serviceClient, {
-      userId: payload.userId,
+    const eventInput = {
       provider: payload.provider,
       platform: payload.platform,
       eventType: payload.eventType,
       externalSubscriptionId: payload.externalSubscriptionId,
       status: payload.status,
-      eventAt: payload.eventAt,
       payload: payload.payload,
-    })
+      ...(payload.userId ? { userId: payload.userId } : {}),
+      ...(payload.eventAt ? { eventAt: payload.eventAt } : {}),
+    }
+    await insertMobileSubscriptionEvent(serviceClient, eventInput)
 
     if (payload.userId) {
-      await upsertMobileSubscription(serviceClient, {
+      const upsertInput = {
         userId: payload.userId,
         provider: payload.provider,
         platform: payload.platform,
         productId: payload.productId,
-        externalCustomerId: payload.externalCustomerId,
         externalSubscriptionId: payload.externalSubscriptionId,
         status: payload.status,
-        currentPeriodStart: payload.currentPeriodStart,
-        currentPeriodEnd: payload.currentPeriodEnd,
-        cancelAtPeriodEnd: payload.cancelAtPeriodEnd,
-        latestEventAt: payload.eventAt,
         rawPayload: payload.payload,
-      })
+        ...(payload.externalCustomerId
+          ? { externalCustomerId: payload.externalCustomerId }
+          : {}),
+        ...(payload.currentPeriodStart
+          ? { currentPeriodStart: payload.currentPeriodStart }
+          : {}),
+        ...(payload.currentPeriodEnd
+          ? { currentPeriodEnd: payload.currentPeriodEnd }
+          : {}),
+        ...(payload.cancelAtPeriodEnd !== undefined
+          ? { cancelAtPeriodEnd: payload.cancelAtPeriodEnd }
+          : {}),
+        ...(payload.eventAt ? { latestEventAt: payload.eventAt } : {}),
+      }
+      await upsertMobileSubscription(serviceClient, upsertInput)
     }
   } catch (err) {
     console.error('[mobile/subscription/webhook] processing failed:', err)

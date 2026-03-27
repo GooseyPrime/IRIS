@@ -75,65 +75,75 @@ export async function POST(request: Request) {
       const invoice = event.data.object as Stripe.Invoice
       console.log(`[stripe webhook] invoice.paid — id=${invoice.id}, amount=${invoice.amount_paid}`)
 
-      if (invoice.subscription) {
-        const supabase = createServiceRoleClient()
-        if (supabase) {
-          const subscriptionId = typeof invoice.subscription === 'string'
-            ? invoice.subscription
-            : invoice.subscription.id
-
-          const customerId = typeof invoice.customer === 'string'
-            ? invoice.customer
-            : invoice.customer?.id
-
-          const userId = typeof invoice.metadata.userId === 'string'
-            ? invoice.metadata.userId
-            : typeof invoice.parent?.subscription_details?.metadata.userId === 'string'
-              ? invoice.parent.subscription_details.metadata.userId
-              : undefined
-
-          if (userId) {
-            const periodStartUnix = invoice.lines.data[0]?.period?.start
-            const periodEndUnix = invoice.lines.data[0]?.period?.end
-            const currentPeriodStart = typeof periodStartUnix === 'number'
-              ? new Date(periodStartUnix * 1000).toISOString()
-              : undefined
-            const currentPeriodEnd = typeof periodEndUnix === 'number'
-              ? new Date(periodEndUnix * 1000).toISOString()
-              : undefined
-            const eventAt = typeof invoice.status_transitions.paid_at === 'number'
-              ? new Date(invoice.status_transitions.paid_at * 1000).toISOString()
-              : new Date().toISOString()
-            const productId = invoice.lines.data[0]?.pricing?.price_details?.price ?? 'price_1TFiZiJF6bibA8neZPyI4H3c'
-
-            await upsertMobileSubscription(supabase, {
-              userId,
-              provider: 'stripe',
-              platform: invoice.metadata.platform === 'android' ? 'android' : 'ios',
-              productId,
-              externalCustomerId: customerId,
-              externalSubscriptionId: subscriptionId,
-              status: 'active',
-              currentPeriodStart,
-              currentPeriodEnd,
-              cancelAtPeriodEnd: false,
-              latestEventAt: eventAt,
-              rawPayload: invoice as unknown as Record<string, unknown>,
-            })
-
-            await insertMobileSubscriptionEvent(supabase, {
-              userId,
-              provider: 'stripe',
-              platform: invoice.metadata.platform === 'android' ? 'android' : 'ios',
-              eventType: event.type,
-              externalSubscriptionId: subscriptionId,
-              status: 'active',
-              eventAt,
-              payload: invoice as unknown as Record<string, unknown>,
-            })
-          }
-        }
+      const subscriptionSource = invoice.parent?.subscription_details?.subscription
+      if (!subscriptionSource) {
+        break
       }
+
+      const supabase = createServiceRoleClient()
+      if (!supabase) {
+        break
+      }
+
+      const subscriptionId = typeof subscriptionSource === 'string'
+        ? subscriptionSource
+        : subscriptionSource.id
+      const customerId = typeof invoice.customer === 'string'
+        ? invoice.customer
+        : invoice.customer?.id
+
+      const invoiceMetadata = invoice.metadata ?? {}
+      const subscriptionMetadata = invoice.parent?.subscription_details?.metadata ?? {}
+      const userId = typeof invoiceMetadata.userId === 'string'
+        ? invoiceMetadata.userId
+        : typeof subscriptionMetadata.userId === 'string'
+          ? subscriptionMetadata.userId
+          : undefined
+
+      if (!userId) {
+        break
+      }
+
+      const periodStartUnix = invoice.lines.data[0]?.period?.start
+      const periodEndUnix = invoice.lines.data[0]?.period?.end
+      const currentPeriodStart = typeof periodStartUnix === 'number'
+        ? new Date(periodStartUnix * 1000).toISOString()
+        : undefined
+      const currentPeriodEnd = typeof periodEndUnix === 'number'
+        ? new Date(periodEndUnix * 1000).toISOString()
+        : undefined
+      const eventAt = typeof invoice.status_transitions.paid_at === 'number'
+        ? new Date(invoice.status_transitions.paid_at * 1000).toISOString()
+        : new Date().toISOString()
+      const productId = resolveInvoiceProductId(invoice)
+      const platform = resolveMobilePlatform(invoiceMetadata.platform)
+
+      const upsertInput = {
+        userId,
+        provider: 'stripe' as const,
+        platform,
+        productId,
+        externalSubscriptionId: subscriptionId,
+        status: 'active' as const,
+        cancelAtPeriodEnd: false,
+        latestEventAt: eventAt,
+        rawPayload: invoice as unknown as Record<string, unknown>,
+        ...(customerId ? { externalCustomerId: customerId } : {}),
+        ...(currentPeriodStart ? { currentPeriodStart } : {}),
+        ...(currentPeriodEnd ? { currentPeriodEnd } : {}),
+      }
+      await upsertMobileSubscription(supabase, upsertInput)
+
+      await insertMobileSubscriptionEvent(supabase, {
+        userId,
+        provider: 'stripe',
+        platform,
+        eventType: event.type,
+        externalSubscriptionId: subscriptionId,
+        status: 'active',
+        eventAt,
+        payload: invoice as unknown as Record<string, unknown>,
+      })
 
       break
     }
@@ -158,36 +168,37 @@ export async function POST(request: Request) {
       }
 
       const status = mapStripeSubscriptionStatus(subscription.status)
-      const currentPeriodStart = typeof subscription.current_period_start === 'number'
-        ? new Date(subscription.current_period_start * 1000).toISOString()
-        : undefined
-      const currentPeriodEnd = typeof subscription.current_period_end === 'number'
-        ? new Date(subscription.current_period_end * 1000).toISOString()
-        : undefined
+      const currentPeriodStart = getSubscriptionPeriodStart(subscription)
+      const currentPeriodEnd = getSubscriptionPeriodEnd(subscription)
       const eventAt = typeof event.created === 'number'
         ? new Date(event.created * 1000).toISOString()
         : new Date().toISOString()
       const productId = resolveStripeProductId(subscription)
+      const customerId = typeof subscription.customer === 'string'
+        ? subscription.customer
+        : subscription.customer?.id
+      const platform = resolveMobilePlatform(subscription.metadata.platform)
 
-      await upsertMobileSubscription(supabase, {
+      const upsertInput = {
         userId,
-        provider: 'stripe',
-        platform: subscription.metadata.platform === 'android' ? 'android' : 'ios',
+        provider: 'stripe' as const,
+        platform,
         productId,
-        externalCustomerId: typeof subscription.customer === 'string' ? subscription.customer : subscription.customer?.id,
         externalSubscriptionId: subscription.id,
         status,
-        currentPeriodStart,
-        currentPeriodEnd,
         cancelAtPeriodEnd: subscription.cancel_at_period_end,
         latestEventAt: eventAt,
         rawPayload: subscription as unknown as Record<string, unknown>,
-      })
+        ...(customerId ? { externalCustomerId: customerId } : {}),
+        ...(currentPeriodStart ? { currentPeriodStart } : {}),
+        ...(currentPeriodEnd ? { currentPeriodEnd } : {}),
+      }
+      await upsertMobileSubscription(supabase, upsertInput)
 
       await insertMobileSubscriptionEvent(supabase, {
         userId,
         provider: 'stripe',
-        platform: subscription.metadata.platform === 'android' ? 'android' : 'ios',
+        platform,
         eventType: event.type,
         externalSubscriptionId: subscription.id,
         status,
@@ -213,6 +224,27 @@ function resolveStripeProductId(subscription: Stripe.Subscription): string {
   return 'price_1TFiZiJF6bibA8neZPyI4H3c'
 }
 
+function resolveInvoiceProductId(invoice: Stripe.Invoice): string {
+  const candidate = invoice.lines.data[0]?.pricing?.price_details?.price
+  return typeof candidate === 'string'
+    ? candidate
+    : 'price_1TFiZiJF6bibA8neZPyI4H3c'
+}
+
+function getSubscriptionPeriodStart(subscription: Stripe.Subscription): string | undefined {
+  const periodStartUnix = subscription.items.data[0]?.current_period_start
+  return typeof periodStartUnix === 'number'
+    ? new Date(periodStartUnix * 1000).toISOString()
+    : undefined
+}
+
+function getSubscriptionPeriodEnd(subscription: Stripe.Subscription): string | undefined {
+  const periodEndUnix = subscription.items.data[0]?.current_period_end
+  return typeof periodEndUnix === 'number'
+    ? new Date(periodEndUnix * 1000).toISOString()
+    : undefined
+}
+
 function mapStripeSubscriptionStatus(
   status: Stripe.Subscription.Status,
 ): 'active' | 'trialing' | 'grace_period' | 'past_due' | 'canceled' | 'expired' {
@@ -232,4 +264,8 @@ function mapStripeSubscriptionStatus(
     case 'paused':
       return 'grace_period'
   }
+}
+
+function resolveMobilePlatform(platformValue: string | undefined): 'ios' | 'android' {
+  return platformValue === 'android' ? 'android' : 'ios'
 }
