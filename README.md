@@ -266,9 +266,288 @@ SUPABASE_SERVICE_ROLE_KEY=
 OPENAI_API_KEY=
 STRIPE_SECRET_KEY=
 STRIPE_WEBHOOK_SECRET=
+MOBILE_SUBSCRIPTION_WEBHOOK_SECRET=
 ```
 
 > `SUPABASE_SERVICE_ROLE_KEY` must **never** be imported in any file that runs client-side. The Cursor agent rules enforce this, but double-check on every PR.
+
+---
+
+## Mobile Apps (iOS + Android) with Paid AI Access
+
+The repository now includes an Expo mobile workspace at `mobile/` that builds both iOS and Android apps.
+
+- **Mobile login** remains available without payment.
+- **Mobile AI chat access** is gated by active paid subscription status.
+- **Website donation flow** remains optional/public (`/donate`) so visitors can help keep web access free.
+- **Mobile price** is **$2.99/month** using Stripe price ID:
+  - `price_1TFiZiJF6bibA8neZPyI4H3c`
+- Tax is **not included** in that list price (store/platform tax rules apply).
+- Coupon codes are enabled in checkout (`allow_promotion_codes: true`).
+- Zero-dollar invoice totals are supported without requiring payment method collection (`payment_method_collection: if_required`).
+
+### What was added
+
+1. **DB collections for mobile subscriptions**
+   - `mobile_subscriptions`: current entitlement status per user/provider/subscription.
+   - `mobile_subscription_events`: audit log of lifecycle events.
+   - Migration file: `supabase/migrations/202603270001_mobile_subscriptions.sql`
+
+2. **Mobile subscription + entitlement APIs**
+   - `POST /api/mobile/subscription/checkout`
+   - `GET /api/mobile/subscription/status`
+- `POST /api/mobile/subscription/webhook` (shared-secret protected)
+  - `POST /api/mobile/chat` (mobile JSON chat endpoint with server-side entitlement gate)
+   - `POST /api/mobile/chat` (mobile JSON chat endpoint with server-side entitlement gate)
+
+3. **Web and mobile logout coverage**
+   - Web persistent nav now includes logout controls.
+   - Mobile app header includes a logout button.
+
+---
+
+## Mobile Local Setup
+
+### 1) Install dependencies
+
+From repo root:
+
+```bash
+pnpm install
+```
+
+This installs both web and `mobile/` workspace packages.
+
+### 2) Configure mobile app runtime values
+
+Edit `mobile/app.json`:
+
+```json
+{
+  "expo": {
+    "extra": {
+      "apiUrl": "https://your-web-domain.com",
+      "supabaseUrl": "https://your-project.supabase.co",
+      "supabaseAnonKey": "your-anon-key"
+    }
+  }
+}
+```
+
+For local development:
+- `apiUrl` can be your local tunnel URL or local network URL where the Next.js app is reachable by device/emulator.
+
+### 3) Run mobile app
+
+```bash
+pnpm --filter mobile start
+```
+
+Optional platform commands:
+
+```bash
+pnpm --filter mobile ios
+pnpm --filter mobile android
+```
+
+---
+
+## Server Setup for Mobile Billing
+
+### 1) Apply database migration
+
+Run your normal Supabase migration flow for:
+
+`supabase/migrations/202603270001_mobile_subscriptions.sql`
+
+### 2) Set required server env vars
+
+In production runtime:
+
+- `NEXT_PUBLIC_SUPABASE_URL`
+- `NEXT_PUBLIC_SUPABASE_ANON_KEY`
+- `SUPABASE_SERVICE_ROLE_KEY`
+- `STRIPE_SECRET_KEY`
+- `STRIPE_WEBHOOK_SECRET`
+- `MOBILE_SUBSCRIPTION_WEBHOOK_SECRET`
+- `OPENAI_API_KEY`
+
+### 3) Stripe product/price
+
+Mobile checkout route is pinned to:
+
+- `price_1TFiZiJF6bibA8neZPyI4H3c` (`$2.99/month`)
+
+If you need to rotate price IDs later, update:
+- `src/app/api/mobile/subscription/checkout/route.ts`
+- fallback references in Stripe webhook route.
+
+---
+
+## Stripe Webhooks for Subscription Monitoring
+
+Configure Stripe webhook endpoint to your deployed app:
+
+- `POST https://<your-domain>/api/webhooks/stripe`
+
+Recommended subscribed events:
+- `checkout.session.completed`
+- `invoice.paid`
+- `customer.subscription.created`
+- `customer.subscription.updated`
+- `customer.subscription.deleted`
+
+Behavior:
+- Donation sponsorship logic remains in webhook.
+- Mobile subscription lifecycle events now update:
+  - `mobile_subscriptions`
+  - `mobile_subscription_events`
+
+---
+
+## Mobile Store Event Webhook (Apple/Google Normalized)
+
+For provider-side server adapters (App Store Server Notifications / Google RTDN), normalize incoming payloads and forward to:
+
+- `POST https://<your-domain>/api/mobile/subscription/webhook`
+
+Required header:
+
+- `x-mobile-webhook-secret: <MOBILE_SUBSCRIPTION_WEBHOOK_SECRET>`
+
+Required JSON shape:
+
+```json
+{
+  "provider": "apple",
+  "platform": "ios",
+  "eventType": "DID_RENEW",
+  "userId": "uuid",
+  "productId": "com.iris.mobile.monthly",
+  "externalCustomerId": "optional-customer-id",
+  "externalSubscriptionId": "provider-subscription-id",
+  "status": "active",
+  "currentPeriodStart": "2026-03-01T00:00:00.000Z",
+  "currentPeriodEnd": "2026-04-01T00:00:00.000Z",
+  "cancelAtPeriodEnd": false,
+  "eventAt": "2026-03-27T12:00:00.000Z",
+  "payload": {}
+}
+```
+
+Supported status values:
+- `active`
+- `trialing`
+- `grace_period`
+- `past_due`
+- `canceled`
+- `expired`
+
+---
+
+## AI Gating Behavior (Web vs Mobile)
+
+- **Web chat (`/api/chat`)**: unchanged access model (authenticated access).
+- **Mobile chat (`/api/mobile/chat`)**:
+  - Authenticated users can log in.
+  - AI responses are blocked unless entitlement is active.
+  - On lapse/expiration/cancellation, user can still log in but chat is disabled.
+
+This ensures account access remains available while premium AI functionality is paid on mobile.
+
+---
+
+## Play Store (Android) Release Instructions
+
+### 1) Play Console setup
+
+1. Create app in Google Play Console.
+2. Configure package ID to match `mobile/app.json`:
+   - `android.package` (currently `com.iris.sobriety`).
+3. Complete app content, data safety, privacy policy, and store listing sections.
+
+### 2) Subscription product configuration
+
+In Play Console Monetization:
+
+1. Create subscription product for monthly AI access.
+2. Set base plan price to `2.99 USD` (tax handling per Play region settings).
+3. Enable intro offers/coupons/promotions as needed.
+4. Ensure product identifiers map to your provider adapter that posts entitlement updates to `/api/mobile/subscription/webhook`.
+
+### 3) Build Android artifact
+
+Use EAS Build (recommended):
+
+```bash
+pnpm --filter mobile exec npx eas build -p android --profile production
+```
+
+Upload generated AAB to Play Console release track (internal testing first).
+
+### 4) Verify entitlement flow
+
+Before production:
+1. Install test build via internal track.
+2. Purchase subscription in test account.
+3. Confirm `mobile_subscriptions` row becomes active.
+4. Confirm AI chat unlocks.
+5. Cancel/lapse test subscription and verify AI is gated but login remains.
+
+---
+
+## App Store (iOS) Release Instructions
+
+### 1) App Store Connect setup
+
+1. Create app in App Store Connect.
+2. Configure bundle identifier to match `mobile/app.json`:
+   - `ios.bundleIdentifier` (currently `com.iris.sobriety`).
+3. Complete app metadata, privacy nutrition labels, and compliance forms.
+
+### 2) Subscription product configuration
+
+In App Store Connect:
+
+1. Create auto-renewable subscription for monthly AI access.
+2. Set U.S. storefront price equivalent to `2.99 USD` tier.
+3. Configure introductory offers and promo offers as desired.
+4. Wire App Store Server Notification processing (your provider adapter) to forward normalized events to `/api/mobile/subscription/webhook`.
+
+### 3) Build iOS artifact
+
+Use EAS Build (recommended):
+
+```bash
+pnpm --filter mobile exec npx eas build -p ios --profile production
+```
+
+Submit resulting build to TestFlight first, then App Review.
+
+### 4) Verify entitlement flow
+
+In TestFlight sandbox:
+1. Sign in.
+2. Purchase subscription.
+3. Verify server updates entitlement.
+4. Verify chat unlocks.
+5. Expire/cancel and verify login still works while chat is gated.
+
+---
+
+## Deployment Checklist for Mobile Sales
+
+Before enabling public sales:
+
+- [ ] Migration applied in production (`mobile_subscriptions`, `mobile_subscription_events`)
+- [ ] Stripe webhook configured and receiving events
+- [ ] Mobile webhook secret configured and validated
+- [ ] Provider adapter(s) forwarding Apple/Google events to mobile webhook route
+- [ ] Mobile app `extra.apiUrl` points to production web API domain
+- [ ] Subscription purchase unlock test passed
+- [ ] Lapsed subscription gating test passed
+- [ ] Donation website path remains publicly available
+- [ ] Logout available in web nav and mobile header
 
 ---
 

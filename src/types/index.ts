@@ -20,6 +20,71 @@ export const ACCOUNT_TIER = {
 
 export type AccountTier = (typeof ACCOUNT_TIER)[keyof typeof ACCOUNT_TIER]
 
+export const MOBILE_SUBSCRIPTION_PROVIDER = {
+  STRIPE: 'stripe',
+  APPLE: 'apple',
+  GOOGLE: 'google',
+} as const
+
+export type MobileSubscriptionProvider =
+  (typeof MOBILE_SUBSCRIPTION_PROVIDER)[keyof typeof MOBILE_SUBSCRIPTION_PROVIDER]
+
+export const MOBILE_PLATFORM = {
+  IOS: 'ios',
+  ANDROID: 'android',
+} as const
+
+export type MobilePlatform = (typeof MOBILE_PLATFORM)[keyof typeof MOBILE_PLATFORM]
+
+export const MOBILE_SUBSCRIPTION_STATUS = {
+  ACTIVE: 'active',
+  TRIALING: 'trialing',
+  GRACE_PERIOD: 'grace_period',
+  PAST_DUE: 'past_due',
+  CANCELED: 'canceled',
+  EXPIRED: 'expired',
+} as const
+
+export type MobileSubscriptionStatus =
+  (typeof MOBILE_SUBSCRIPTION_STATUS)[keyof typeof MOBILE_SUBSCRIPTION_STATUS]
+
+export const MobileSubscriptionCheckoutSchema = z.object({
+  platform: z.enum([MOBILE_PLATFORM.IOS, MOBILE_PLATFORM.ANDROID]),
+  successUrl: z.string().url().optional(),
+  cancelUrl: z.string().url().optional(),
+})
+
+export type MobileSubscriptionCheckoutInput = z.infer<typeof MobileSubscriptionCheckoutSchema>
+
+export const MobileSubscriptionEventSchema = z.object({
+  provider: z.enum([
+    MOBILE_SUBSCRIPTION_PROVIDER.STRIPE,
+    MOBILE_SUBSCRIPTION_PROVIDER.APPLE,
+    MOBILE_SUBSCRIPTION_PROVIDER.GOOGLE,
+  ]),
+  platform: z.enum([MOBILE_PLATFORM.IOS, MOBILE_PLATFORM.ANDROID]),
+  eventType: z.string().min(1).max(150),
+  userId: z.string().uuid().optional(),
+  productId: z.string().min(1).max(150),
+  externalCustomerId: z.string().max(255).optional(),
+  externalSubscriptionId: z.string().min(1).max(255),
+  status: z.enum([
+    MOBILE_SUBSCRIPTION_STATUS.ACTIVE,
+    MOBILE_SUBSCRIPTION_STATUS.TRIALING,
+    MOBILE_SUBSCRIPTION_STATUS.GRACE_PERIOD,
+    MOBILE_SUBSCRIPTION_STATUS.PAST_DUE,
+    MOBILE_SUBSCRIPTION_STATUS.CANCELED,
+    MOBILE_SUBSCRIPTION_STATUS.EXPIRED,
+  ]),
+  currentPeriodStart: z.string().datetime().optional(),
+  currentPeriodEnd: z.string().datetime().optional(),
+  cancelAtPeriodEnd: z.boolean().optional(),
+  eventAt: z.string().datetime().optional(),
+  payload: z.record(z.string(), z.unknown()).default({}),
+})
+
+export type MobileSubscriptionEventInput = z.infer<typeof MobileSubscriptionEventSchema>
+
 // ---------------------------------------------------------------------------
 // Check-in
 // ---------------------------------------------------------------------------

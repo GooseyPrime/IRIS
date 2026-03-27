@@ -261,6 +261,99 @@ export interface Database {
         }
         Relationships: []
       }
+      mobile_subscriptions: {
+        Row: {
+          id: string
+          user_id: string
+          provider: 'stripe' | 'apple' | 'google'
+          platform: 'ios' | 'android'
+          product_id: string
+          external_customer_id: string | null
+          external_subscription_id: string
+          status: 'active' | 'trialing' | 'grace_period' | 'past_due' | 'canceled' | 'expired'
+          current_period_start: string | null
+          current_period_end: string | null
+          cancel_at_period_end: boolean
+          latest_event_at: string
+          raw_payload: Json
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          user_id: string
+          provider: 'stripe' | 'apple' | 'google'
+          platform: 'ios' | 'android'
+          product_id: string
+          external_customer_id?: string | null
+          external_subscription_id: string
+          status: 'active' | 'trialing' | 'grace_period' | 'past_due' | 'canceled' | 'expired'
+          current_period_start?: string | null
+          current_period_end?: string | null
+          cancel_at_period_end?: boolean
+          latest_event_at?: string
+          raw_payload?: Json
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          user_id?: string
+          provider?: 'stripe' | 'apple' | 'google'
+          platform?: 'ios' | 'android'
+          product_id?: string
+          external_customer_id?: string | null
+          external_subscription_id?: string
+          status?: 'active' | 'trialing' | 'grace_period' | 'past_due' | 'canceled' | 'expired'
+          current_period_start?: string | null
+          current_period_end?: string | null
+          cancel_at_period_end?: boolean
+          latest_event_at?: string
+          raw_payload?: Json
+          created_at?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      mobile_subscription_events: {
+        Row: {
+          id: string
+          user_id: string | null
+          provider: 'stripe' | 'apple' | 'google'
+          platform: 'ios' | 'android'
+          event_type: string
+          external_subscription_id: string | null
+          status: 'active' | 'trialing' | 'grace_period' | 'past_due' | 'canceled' | 'expired' | null
+          event_at: string
+          payload: Json
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          user_id?: string | null
+          provider: 'stripe' | 'apple' | 'google'
+          platform: 'ios' | 'android'
+          event_type: string
+          external_subscription_id?: string | null
+          status?: 'active' | 'trialing' | 'grace_period' | 'past_due' | 'canceled' | 'expired' | null
+          event_at?: string
+          payload?: Json
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          user_id?: string | null
+          provider?: 'stripe' | 'apple' | 'google'
+          platform?: 'ios' | 'android'
+          event_type?: string
+          external_subscription_id?: string | null
+          status?: 'active' | 'trialing' | 'grace_period' | 'past_due' | 'canceled' | 'expired' | null
+          event_at?: string
+          payload?: Json
+          created_at?: string
+        }
+        Relationships: []
+      }
     }
     Views: Record<string, never>
     Functions: Record<string, never>
