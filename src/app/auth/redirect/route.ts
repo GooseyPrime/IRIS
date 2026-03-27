@@ -35,7 +35,7 @@ export async function GET(request: Request) {
   // profile, mark onboarding complete, and send them to the dashboard.
   const isAnonymous = user.is_anonymous === true
   if (!isAnonymous) {
-    await supabase.from('user_profiles').upsert({
+    const { error } = await supabase.from('user_profiles').upsert({
       id: user.id,
       substances: ['other'],
       sobriety_date: null,
@@ -45,9 +45,12 @@ export async function GET(request: Request) {
       onboarding_completed: true,
       updated_at: new Date().toISOString(),
     })
-    return NextResponse.redirect(`${origin}/dashboard`)
+    if (!error) {
+      return NextResponse.redirect(`${origin}/dashboard`)
+    }
+    // If upsert failed, fall through to onboarding
   }
 
-  // Anonymous users without completed onboarding → start the interview
+  // Anonymous users or failed profile creation → start the interview
   return NextResponse.redirect(`${origin}/onboarding`)
 }

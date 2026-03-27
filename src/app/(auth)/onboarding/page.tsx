@@ -27,14 +27,22 @@ export default async function OnboardingPage() {
     }
 
     // Non-anonymous users (real email/OAuth accounts) already have an account —
-    // skip the interview and let them fill in their profile from settings.
+    // create a default profile and send them to the dashboard.
     if (!user.is_anonymous) {
-      await supabase.from('user_profiles').upsert({
+      const { error } = await supabase.from('user_profiles').upsert({
         id: user.id,
+        substances: ['other'],
+        sobriety_date: null,
+        goals: ['Stay sober one day at a time'],
+        triggers: [],
+        tone_preference: 'warm',
         onboarding_completed: true,
         updated_at: new Date().toISOString(),
       })
-      redirect('/dashboard')
+      if (!error) {
+        redirect('/dashboard')
+      }
+      // If upsert failed, fall through to show the interview
     }
   }
 

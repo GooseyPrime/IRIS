@@ -54,20 +54,12 @@ export default function HomePage() {
                 Every day you rise is a day you shine.
               </p>
 
-              <div className="flex flex-col gap-4 sm:flex-row">
-                <Link
-                  href="/signup"
-                  className="bg-white/10 border border-white/20 text-white font-sans font-medium px-8 py-4 rounded-xl hover:bg-white/20 backdrop-blur-md active:scale-[0.98] transition-all duration-200 focus-visible:ring-2 focus-visible:ring-iris-500 focus-visible:ring-offset-2 focus-visible:ring-offset-black"
-                >
-                  Begin Your Journey
-                </Link>
-                <Link
-                  href="/donate"
-                  className="border border-gold-500/40 text-gold-400 font-sans font-medium px-8 py-4 rounded-xl hover:bg-gold-500/10 hover:text-gold-300 backdrop-blur-md transition-all duration-200 focus-visible:ring-2 focus-visible:ring-gold-500 focus-visible:ring-offset-2 focus-visible:ring-offset-black"
-                >
-                  Become a Guiding Light
-                </Link>
-              </div>
+              <Link
+                href="/signup"
+                className="bg-white/10 border border-white/20 text-white font-sans font-medium px-8 py-4 rounded-xl hover:bg-white/20 backdrop-blur-md active:scale-[0.98] transition-all duration-200 focus-visible:ring-2 focus-visible:ring-iris-500 focus-visible:ring-offset-2 focus-visible:ring-offset-black"
+              >
+                Begin Your Journey
+              </Link>
             </div>
           </div>
         </section>
