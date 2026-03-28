@@ -11,6 +11,7 @@ import { createClient } from '@/lib/supabase/server'
 import { ChatRequestSchema } from '@/types'
 import { detectCrisis, CRISIS_RESPONSES } from '@/lib/crisis-detection'
 import { logCrisisEvent } from '@/lib/log-crisis-event'
+import { getMobileEntitlementSnapshot } from '@/lib/mobile-subscriptions'
 
 export const maxDuration = 60
 
@@ -23,6 +24,36 @@ export async function POST(req: Request) {
 
   if (!user) {
     return new Response('Unauthorized', { status: 401 })
+  }
+
+  const platformHeader = req.headers.get('x-mobile-platform')
+  const isMobileRequest = platformHeader === 'ios' || platformHeader === 'android'
+
+  if (isMobileRequest) {
+    try {
+      const entitlement = await getMobileEntitlementSnapshot(supabase, user.id)
+      if (!entitlement.hasMobileAiAccess) {
+        return new Response(
+          JSON.stringify({
+            error: 'Mobile subscription required for AI chat access.',
+            code: 'MOBILE_SUBSCRIPTION_REQUIRED',
+          }),
+          {
+            status: 402,
+            headers: { 'Content-Type': 'application/json' },
+          },
+        )
+      }
+    } catch (entitlementErr) {
+      console.error('[chat] failed to resolve mobile entitlement:', entitlementErr)
+      return new Response(
+        JSON.stringify({ error: 'Failed to verify mobile subscription status.' }),
+        {
+          status: 500,
+          headers: { 'Content-Type': 'application/json' },
+        },
+      )
+    }
   }
 
   let body: unknown

@@ -27,3 +27,6 @@ Thumbs.db
 .idea
 *.swp
 *.swo
+
+# Expo / React Native
+mobile/.expo

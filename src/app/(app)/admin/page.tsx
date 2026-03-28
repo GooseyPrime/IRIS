@@ -2,6 +2,7 @@ import { redirect } from 'next/navigation'
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/server'
 import { formatShortDate } from '@/lib/format-date'
+import { LogoutButton } from '@/components/auth/LogoutButton'
 import type { Metadata } from 'next'
 
 export const metadata: Metadata = {
@@ -62,7 +63,10 @@ export default async function AdminPage() {
         <span className="font-serif font-light text-lg tracking-tight text-text-primary">
           Admin
         </span>
-        <div className="w-12" />
+        <LogoutButton
+          label="Log out"
+          className="font-sans text-xs text-text-secondary hover:text-text-primary transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-iris-500 rounded disabled:opacity-60"
+        />
       </header>
 
       <main className="mx-auto max-w-4xl px-4 py-6 space-y-8">

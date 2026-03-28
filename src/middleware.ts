@@ -50,6 +50,9 @@ export async function middleware(request: NextRequest) {
     pathname.startsWith('/onboarding') ||
     pathname.startsWith('/donate') ||
     pathname.startsWith('/api/donate') ||
+    pathname.startsWith('/api/mobile') ||
+    pathname.startsWith('/api/mobile/subscription/webhook') ||
+    pathname.startsWith('/auth/logout') ||
     pathname.startsWith('/auth/redirect') ||
     pathname.startsWith('/api/webhooks')
 

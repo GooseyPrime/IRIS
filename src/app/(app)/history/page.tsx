@@ -5,6 +5,7 @@ import { SessionList } from '@/components/history/SessionList'
 import { SESSIONS_PAGE_SIZE } from '@/types'
 import type { SessionPreview } from '@/types'
 import type { Metadata } from 'next'
+import { LogoutButton } from '@/components/auth/LogoutButton'
 
 export const metadata: Metadata = {
   title: 'IRIS — Past Sessions',
@@ -105,12 +106,18 @@ export default async function HistoryPage() {
         <span className="font-serif font-light text-lg tracking-tight text-text-primary">
           Past Sessions
         </span>
-        <Link
-          href="/chat"
-          className="font-sans text-sm text-iris-400 hover:text-iris-300 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-iris-500 rounded"
-        >
-          New
-        </Link>
+        <div className="flex items-center gap-4">
+          <Link
+            href="/chat"
+            className="font-sans text-sm text-iris-400 hover:text-iris-300 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-iris-500 rounded"
+          >
+            New
+          </Link>
+          <LogoutButton
+            label="Log out"
+            className="font-sans text-xs text-text-secondary hover:text-text-primary transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-iris-500 rounded disabled:opacity-60"
+          />
+        </div>
       </header>
 
       <main className="mx-auto max-w-2xl px-4 py-6">

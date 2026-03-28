@@ -1,4 +1,5 @@
 import Link from 'next/link'
+import { LogoutButton } from '@/components/auth/LogoutButton'
 
 interface DashboardShellProps {
   children: React.ReactNode
@@ -27,6 +28,7 @@ export function DashboardShell({ children }: DashboardShellProps) {
           >
             Feedback
           </Link>
+          <LogoutButton />
         </div>
       </nav>
 

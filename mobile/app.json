@@ -1,0 +1,29 @@
+{
+  "expo": {
+    "name": "IRIS",
+    "slug": "iris-mobile",
+    "scheme": "iris",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "com.iris.sobriety"
+    },
+    "android": {
+      "package": "com.iris.sobriety",
+      "edgeToEdgeEnabled": true
+    },
+    "web": {
+      "bundler": "metro",
+      "output": "single"
+    },
+    "plugins": [
+      "expo-router"
+    ],
+    "extra": {
+      "apiUrl": "http://localhost:3000",
+      "supabaseUrl": "",
+      "supabaseAnonKey": ""
+    }
+  }
+}
